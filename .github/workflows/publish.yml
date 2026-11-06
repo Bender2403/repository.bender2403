@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: kodi-repository
@@ -33,9 +35,26 @@ jobs:
             [ -n "$addon_dir" ] && git add -A -- "$addon_dir"
           done < generated-addon-dirs.txt
           rm generated-addon-dirs.txt
-          if git diff --cached --quiet; then
+          if ! git diff --cached --quiet; then
+            git commit -m "Kodi-Repository automatisch aktualisieren"
+            git push
+          else
             echo "Keine Änderungen an den Repository-Dateien."
-            exit 0
           fi
-          git commit -m "Kodi-Repository automatisch aktualisieren"
-          git push
+      - name: GitHub Pages konfigurieren
+        uses: actions/configure-pages@v5
+      - name: Kompatibilitätsdateien hochladen
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: GitHub Pages veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v4
