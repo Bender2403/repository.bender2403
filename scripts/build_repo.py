@@ -34,6 +34,13 @@ EXTERNAL_ZIPS = [
         "addon_id": "repository.xvault",
         "version": "1.0.3",
     },
+    {
+        "repository": "Bender2403/kodi-rakuten-tv-addon",
+        "ref": "kodi-logs",
+        "path": "dist/script.kodi.loguploader.github-0.0.1.zip",
+        "addon_id": "script.kodi.loguploader.github",
+        "version": "0.0.1",
+    },
 ]
 
 if SITE.exists():
@@ -45,11 +52,14 @@ generated_dirs = []
 
 
 def publish_external_zip(item):
-    filename = item["url"].rsplit("/", 1)[-1]
+    source_repo = item.get("repository", "Bender2403/kodi-rakuten-tv-addon")
+    source_ref = item.get("ref", "original-addons")
+    source_path = item.get("path", item["url"].rsplit("/", 1)[-1])
+    filename = source_path.rsplit("/", 1)[-1]
     api_url = (
-        "https://api.github.com/repos/Bender2403/kodi-rakuten-tv-addon/contents/"
-        + urllib.parse.quote(filename)
-        + "?ref=original-addons"
+        "https://api.github.com/repos/" + source_repo + "/contents/"
+        + urllib.parse.quote(source_path, safe="/")
+        + "?ref=" + urllib.parse.quote(source_ref, safe="")
     )
     token = __import__("os").environ.get("SOURCE_REPO_TOKEN")
     if not token:
