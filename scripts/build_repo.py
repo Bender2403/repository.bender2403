@@ -163,8 +163,8 @@ for item in EXTERNAL_ZIPS:
 if not all_addons:
     raise SystemExit("Keine Add-ons in addons/ gefunden.")
 
-xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\\n<addons>\\n'
-xml += "\\n".join(all_addons) + "\\n</addons>\\n"
+xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<addons>\n'
+xml += "\n".join(all_addons) + "\n</addons>\n"
 xml_bytes = xml.encode("utf-8")
 digest = hashlib.md5(xml_bytes).hexdigest()
 
@@ -180,5 +180,5 @@ digest = hashlib.md5(xml_bytes).hexdigest()
     encoding="utf-8",
 )
 
-(ROOT / "generated-addon-dirs.txt").write_text("\\n".join(generated_dirs) + "\\n", encoding="utf-8")
+(ROOT / "generated-addon-dirs.txt").write_text("\n".join(generated_dirs) + "\n", encoding="utf-8")
 print(f"Repository gebaut: {len(all_addons)} Add-on(s): {', '.join(generated_dirs)}")
