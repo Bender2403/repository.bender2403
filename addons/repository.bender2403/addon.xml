@@ -11,5 +11,8 @@
     <summary lang="de_DE">Offizielles Kodi-Add-on-Repository von Bender2403</summary>
     <description lang="de_DE">Stellt geprüfte Kodi-Add-ons und deren Aktualisierungen bereit.</description>
     <platform>all</platform>
+    <assets>
+      <icon>icon.jpg</icon>
+    </assets>
   </extension>
 </addon>
