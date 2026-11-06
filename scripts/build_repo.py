@@ -3,6 +3,9 @@
 from pathlib import Path, PurePosixPath
 from xml.etree import ElementTree as ET
 import hashlib
+import base64
+import json
+import urllib.parse
 import shutil
 import tempfile
 import urllib.request
@@ -42,9 +45,24 @@ generated_dirs = []
 
 
 def publish_external_zip(item):
-    request = urllib.request.Request(item["url"], headers={"User-Agent": "Bender2403-Kodi-Repository"})
+    filename = item["url"].rsplit("/", 1)[-1]
+    api_url = (
+        "https://api.github.com/repos/Bender2403/kodi-rakuten-tv-addon/contents/"
+        + urllib.parse.quote(filename)
+        + "?ref=original-addons"
+    )
+    request = urllib.request.Request(
+        api_url,
+        headers={
+            "User-Agent": "Bender2403-Kodi-Repository",
+            "Accept": "application/vnd.github+json",
+        },
+    )
     with urllib.request.urlopen(request, timeout=60) as response:
-        archive_bytes = response.read()
+        payload = json.loads(response.read().decode("utf-8"))
+    if payload.get("encoding") != "base64" or not payload.get("content"):
+        raise SystemExit(f"GitHub hat keinen Base64-Dateiinhalt für {filename} geliefert")
+    archive_bytes = base64.b64decode(payload["content"])
 
     with tempfile.TemporaryDirectory() as temp_dir:
         archive_path = Path(temp_dir) / "source.zip"
