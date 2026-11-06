@@ -51,11 +51,15 @@ def publish_external_zip(item):
         + urllib.parse.quote(filename)
         + "?ref=original-addons"
     )
+    token = __import__("os").environ.get("SOURCE_REPO_TOKEN")
+    if not token:
+        raise SystemExit("GitHub-Secret SOURCE_REPO_TOKEN fehlt. Bitte einen Token mit Leserechten auf das private Quell-Repository hinterlegen.")
     request = urllib.request.Request(
         api_url,
         headers={
             "User-Agent": "Bender2403-Kodi-Repository",
             "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
         },
     )
     with urllib.request.urlopen(request, timeout=60) as response:
