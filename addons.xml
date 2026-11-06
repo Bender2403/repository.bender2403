@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addons>
+<addon id="repository.bender2403" name="Bender2403 Add-on Repository" version="1.0.1" provider-name="Bender2403">
+  <requires>
+    <import addon="xbmc.addon" version="12.0.0" />
+  </requires>
+  <extension point="xbmc.addon.repository" name="Bender2403 Add-on Repository">
+    <dir>
+      <info compressed="false">https://raw.githubusercontent.com/Bender2403/repository.bender2403/main/addons.xml</info>
+      <checksum>https://raw.githubusercontent.com/Bender2403/repository.bender2403/main/addons.xml.md5</checksum>
+      <datadir zip="true">https://raw.githubusercontent.com/Bender2403/repository.bender2403/main</datadir>
+    </dir>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="de_DE">Offizielles Kodi-Add-on-Repository von Bender2403</summary>
+    <description lang="de_DE">Stellt geprüfte Kodi-Add-ons und deren Aktualisierungen bereit.</description>
+    <platform>all</platform>
+    <assets>
+      <icon>icon.jpg</icon>
+    </assets>
+  </extension>
+</addon>
+</addons>
