@@ -25,6 +25,8 @@ jobs:
         with:
           python-version: "3.x"
       - name: Kodi-Repository-Dateien bauen
+        env:
+          SOURCE_REPO_TOKEN: ${{ secrets.SOURCE_REPO_TOKEN }}
         run: python scripts/build_repo.py
       - name: Generierte Dateien veröffentlichen
         run: |
