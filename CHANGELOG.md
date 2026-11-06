@@ -10,6 +10,15 @@ Versionsnummern des Repository-Add-ons entsprechen den Versionen in
 
 - Noch keine Änderungen.
 
+## [1.0.1] - 2026-11-06
+
+### Geändert
+
+- Repository-Veröffentlichung auf die Kodi-übliche Verzeichnisstruktur im Hauptbranch umgestellt.
+- `addons.xml`, `addons.xml.md5` und versionierte ZIP-Dateien werden direkt im Repository bereitgestellt.
+- Repository-Add-on verwendet HTTPS-Raw-GitHub-Adressen und Version 1.0.1.
+- GitHub Actions veröffentlicht generierte Dateien automatisch im Hauptbranch.
+
 ## [1.0.0] - 2026-11-06
 
 ### Hinzugefügt
