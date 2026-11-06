@@ -1,0 +1,50 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Kodi Logfile Uploader (GitHub) 1.1.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-06 00:00+0000\n"
+"PO-Revision-Date: 2026-11-06 00:00+0000\n"
+"Language: en_GB\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgctxt "#30000"
+msgid "General"
+msgstr "General"
+
+msgctxt "#30001"
+msgid "GitHub Upload"
+msgstr "GitHub Upload"
+
+msgctxt "#30002"
+msgid "Upload target"
+msgstr "Upload target"
+
+msgctxt "#30003"
+msgid "GitHub (default)"
+msgstr "GitHub (default)"
+
+msgctxt "#30004"
+msgid "paste.kodi.tv"
+msgstr "paste.kodi.tv"
+
+msgctxt "#30005"
+msgid "GitHub repository"
+msgstr "GitHub repository"
+
+msgctxt "#30006"
+msgid "GitHub branch"
+msgstr "GitHub branch"
+
+msgctxt "#30007"
+msgid "GitHub fine-grained token"
+msgstr "GitHub fine-grained token"
+
+msgctxt "#30008"
+msgid "Expert"
+msgstr "Expert"
+
+msgctxt "#30010"
+msgid "Authentication"
+msgstr "Authentication"

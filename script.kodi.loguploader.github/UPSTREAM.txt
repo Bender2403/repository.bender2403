@@ -1,0 +1,4 @@
+This add-on is a modification of script.kodi.loguploader by Ronie / Team Kodi.
+Upstream project: https://gitlab.com/ronie/script.kodi.loguploader/
+Upstream source revision: b989e18b4da200a13d4154cc652aa358f534012d
+The upstream project declares GPL-2.0-only. This modification is intended to remain under GPL-2.0-only.
