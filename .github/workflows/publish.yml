@@ -28,8 +28,6 @@ jobs:
         run: python scripts/build_repo.py
       - name: GitHub Pages konfigurieren
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - name: Veröffentlichungsdateien hochladen
         uses: actions/upload-pages-artifact@v3
         with:
