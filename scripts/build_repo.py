@@ -54,7 +54,9 @@ generated_dirs = []
 def publish_external_zip(item):
     source_repo = item.get("repository", "Bender2403/kodi-rakuten-tv-addon")
     source_ref = item.get("ref", "original-addons")
-    source_path = item.get("path", item["url"].rsplit("/", 1)[-1])
+    source_path = item.get("path") or item.get("url", "").rsplit("/", 1)[-1]
+    if not source_path:
+        raise SystemExit(f"Quellpfad für {item['addon_id']} fehlt")
     filename = source_path.rsplit("/", 1)[-1]
     api_url = (
         "https://api.github.com/repos/" + source_repo + "/contents/"
