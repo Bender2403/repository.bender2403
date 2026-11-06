@@ -1,36 +1,34 @@
 # Kodi-Repository von Bender2403
 
-Dieses öffentliche Repository stellt Add-ons für Kodi bereit.
+Dieses öffentliche Repository stellt geprüfte Add-ons für Kodi bereit.
 
 ## Repository in Kodi installieren
 
-Nach Aktivierung von GitHub Pages lautet die Repository-Adresse:
+Repository-ZIP:
+`https://raw.githubusercontent.com/Bender2403/repository.bender2403/main/repository.bender2403/repository.bender2403-1.0.1.zip`
 
-`https://bender2403.github.io/repository.bender2403/`
+Repository-Metadaten:
+- `https://raw.githubusercontent.com/Bender2403/repository.bender2403/main/addons.xml`
+- `https://raw.githubusercontent.com/Bender2403/repository.bender2403/main/addons.xml.md5`
 
-## Automatische Updates – einschließlich dieses Repository-Add-ons
+## Automatische Veröffentlichung und Updates
 
-Das Add-on `repository.bender2403` wird selbst in `addons.xml` aufgenommen und als ZIP unter `zips/repository.bender2403/` veröffentlicht. Dadurch kann Kodi auch Aktualisierungen des Repository-Add-ons über die bereits installierte Repository-Quelle finden und installieren.
+Die Quellordner liegen unter `addons/<addon-id>/`. Bei jedem Push nach `main` baut GitHub Actions automatisch:
+- die zentrale `addons.xml`,
+- die Prüfsumme `addons.xml.md5`,
+- pro Add-on einen Ordner `<addon-id>/` mit Add-on-Dateien und ZIP-Paket.
 
-Wenn das Repository-Add-on geändert wird:
+Diese generierten Dateien werden direkt in den Hauptbranch committed. Kodi kann dadurch neue Add-on-Versionen über das installierte Repository erkennen.
 
-1. Die Versionsnummer in `addons/repository.bender2403/addon.xml` erhöhen (zum Beispiel `1.0.0` auf `1.0.1`).
-2. Änderungen nach `main` übernehmen.
-3. GitHub Actions baut automatisch die ZIP-Datei, `addons.xml` und die Prüfsumme und veröffentlicht sie über GitHub Pages.
-4. Kodi kann die neue Version anschließend über die normale Add-on-Aktualisierung beziehen.
-
-Die Versionsnummer muss bei jeder Veröffentlichung erhöht werden. Eine bestehende Version wird nicht überschrieben.
+Bei Änderungen am Repository-Add-on muss dessen Versionsnummer in `addons/repository.bender2403/addon.xml` erhöht werden. Bei Änderungen an den Repository-URLs muss die Repository-Add-on-Version ebenfalls erhöht werden, damit Kodi die Quelle neu einliest.
 
 ## Aufbau
 
 - `addons/`: Quellordner der veröffentlichten Kodi-Add-ons
 - `scripts/build_repo.py`: Erzeugt ZIP-Dateien, `addons.xml` und Prüfsumme
-- `.github/workflows/publish.yml`: Baut und veröffentlicht das Repository automatisch
+- `.github/workflows/publish.yml`: Baut und veröffentlicht die Dateien automatisch
+- `<addon-id>/`: Automatisch erzeugte Veröffentlichungsordner mit ZIP-Dateien
 
-Neue Add-ons werden erst nach Prüfung und ausdrücklicher Aufnahme in `addons/` veröffentlicht.
+Neue Add-ons werden nur aufgenommen, wenn sie als Quellordner unter `addons/` liegen.
 
-**Hinweis:** Rakuten TV und RTL+ sind derzeit nicht Bestandteil dieses Repositorys.
-
-## Einmalige GitHub-Pages-Einstellung
-
-GitHub Pages muss für dieses Repository einmalig unter **Settings → Pages → Build and deployment → Source: GitHub Actions** aktiviert werden. Danach übernimmt der Workflow die Veröffentlichungen automatisch.
+**Rakuten TV und RTL+ sind ausdrücklich nicht Bestandteil dieses Repositorys.**
