@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build Kodi repository metadata and add-on ZIP archives."""
+"""Build a Kodi-compatible repository in the repository root."""
 from pathlib import Path
 from xml.etree import ElementTree as ET
 import hashlib
@@ -7,47 +7,58 @@ import shutil
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-ADDONS = ROOT / "addons"
-SITE = ROOT / "_site"
-
-if SITE.exists():
-    shutil.rmtree(SITE)
-SITE.mkdir(parents=True)
-
+SOURCES = ROOT / "addons"
 all_addons = []
-for addon_dir in sorted(p for p in ADDONS.iterdir() if p.is_dir()):
-    addon_xml = addon_dir / "addon.xml"
+generated_dirs = []
+
+for source in sorted(p for p in SOURCES.iterdir() if p.is_dir()):
+    addon_xml = source / "addon.xml"
     if not addon_xml.is_file():
         continue
+
     addon = ET.parse(addon_xml).getroot()
     addon_id = addon.attrib.get("id")
     version = addon.attrib.get("version")
     if not addon_id or not version:
         raise SystemExit(f"Ungültige addon.xml: {addon_xml}")
-    all_addons.append(ET.tostring(addon, encoding="unicode"))
+    if source.name != addon_id:
+        raise SystemExit(f"Ordnername {source.name} stimmt nicht mit Add-on-ID {addon_id} überein")
 
-    zip_dir = SITE / "zips" / addon_id
-    zip_dir.mkdir(parents=True, exist_ok=True)
-    archive = zip_dir / f"{addon_id}-{version}.zip"
+    target = ROOT / addon_id
+    if target == SOURCES or target == ROOT / ".github":
+        raise SystemExit(f"Ungültiger Ausgabeordner: {target}")
+    if target.exists():
+        shutil.rmtree(target)
+    target.mkdir(parents=True)
+
+    files = []
+    for file in sorted(source.rglob("*")):
+        if not file.is_file() or "__pycache__" in file.parts or file.suffix == ".pyc":
+            continue
+        relative = file.relative_to(source)
+        destination = target / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(file, destination)
+        files.append((destination, Path(addon_id) / relative))
+
+    archive = target / f"{addon_id}-{version}.zip"
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
-        for file in sorted(addon_dir.rglob("*")):
-            if file.is_file() and "__pycache__" not in file.parts and file.suffix != ".pyc":
-                zf.write(file, Path(addon_id) / file.relative_to(addon_dir))
+        for file, archive_name in files:
+            zf.write(file, archive_name)
+
+    all_addons.append(ET.tostring(addon, encoding="unicode"))
+    generated_dirs.append(addon_id)
 
 if not all_addons:
     raise SystemExit("Keine Add-ons in addons/ gefunden.")
 
 xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<addons>\n'
 xml += "\n".join(all_addons) + "\n</addons>\n"
-xml_path = SITE / "addons.xml"
+xml_path = ROOT / "addons.xml"
 xml_path.write_text(xml, encoding="utf-8")
-digest = hashlib.md5(xml_path.read_bytes()).hexdigest()
-(SITE / "addons.xml.md5").write_text(digest, encoding="ascii")
-(SITE / "index.html").write_text(
-    "<!doctype html><html lang='de'><meta charset='utf-8'>"
-    "<title>Bender2403 Kodi-Repository</title>"
-    "<h1>Bender2403 Kodi-Repository</h1>"
-    "<p>Offizielles Add-on-Repository für Kodi.</p></html>",
-    encoding="utf-8",
+(ROOT / "addons.xml.md5").write_text(
+    hashlib.md5(xml_path.read_bytes()).hexdigest(), encoding="ascii"
 )
-print(f"Repository gebaut: {len(all_addons)} Add-on(s)")
+
+(ROOT / "generated-addon-dirs.txt").write_text("\n".join(generated_dirs) + "\n", encoding="utf-8")
+print(f"Repository gebaut: {len(all_addons)} Add-on(s): {', '.join(generated_dirs)}")
