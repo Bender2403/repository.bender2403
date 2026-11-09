@@ -3,6 +3,11 @@ Kodi Logfile Uploader (GitHub)
 
 Version 0.0.3
 -------------
+- Systeminformationen über Python-Laufzeitdaten und Android-Systemeigenschaften ermitteln statt nicht passende Text-Info-Labels zu verwenden.
+- Android-/Fire-TV-Gerät, Android-Version, Architektur und verfügbare CPU-Informationen auslesen; nicht ermittelbare Werte als „Unbekannt“ kennzeichnen.
+- Diagnosepaket-Systembericht um Gerät und Plattform ergänzen.
+- Automatisierte Unit-Tests für Fire-TV-/Android-Werte, fehlende Angaben und ungültige Platzhalter ergänzen.
+
 - Menüeinträge, Diagnosehinweise und Fehlermeldungen über Kodi-Sprachdateien lokalisiert.
 - String-IDs in den für Kodi-Script-Add-ons reservierten Bereich 32000–32999 verschoben.
 - Englische Add-on-Metadaten ergänzt.
