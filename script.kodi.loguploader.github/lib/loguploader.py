@@ -591,15 +591,6 @@ def main():
     ]
     try:
         _debug('Uploader gestartet; Add-on-Version %s.' % ADDON_VERSION)
-        # Refresh the installed add-on list at every launch and let the user
-        # confirm or change which add-ons receive priority in the log filter.
-        try:
-            installed_addons = _get_installed_addons()
-            _select_relevant_addons(dialog, installed_addons)
-        except Exception as scan_error:
-            _log('Installierte Add-ons konnten nicht gelesen werden: %s' % scan_error,
-                 xbmc.LOGWARNING)
-
         choice = dialog.select(ADDON_NAME, choices)
         if choice < 0:
             return

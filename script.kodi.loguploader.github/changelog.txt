@@ -1,6 +1,10 @@
 Kodi Logfile Uploader (GitHub)
 ==============================
 
+Version 0.0.6
+-------------
+- Startverhalten korrigiert: Beim Öffnen erscheint direkt das Hauptmenü; die Add-on-Auswahl wird nur noch über den entsprechenden Menüpunkt geöffnet.
+
 Version 0.0.5
 -------------
 - Fehler bei der Erkennung installierter Add-ons behoben: `type` bleibt ein Filterparameter von `Addons.GetAddons`, wird aber nicht mehr fälschlich als Addon-Eigenschaft abgefragt.
