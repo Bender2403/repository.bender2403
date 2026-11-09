@@ -34,7 +34,7 @@ API_ROOT = 'https://api.github.com'
 TIMEOUT = 30
 MAX_LOG_SIZE = 2 * 1024 * 1024
 MAX_MANIFEST_SIZE = 1024 * 1024
-MAX_PACKAGE_SIZE = 5 * 1024 * 1024
+MAX_PACKAGE_SIZE = 20 * 1024 * 1024
 MAX_MANIFESTS = 8
 
 REDACTIONS = [
@@ -301,7 +301,7 @@ def _build_diagnostic_package():
 
         package_size = os.path.getsize(package_path)
         if package_size > MAX_PACKAGE_SIZE:
-            raise RuntimeError('Diagnosepaket überschreitet das Upload-Limit von 5 MB.')
+            raise RuntimeError('Diagnosepaket überschreitet das Upload-Limit von 20 MB.')
         if not any(item.startswith('Log aufgenommen:') for item in report):
             raise RuntimeError('Es konnten keine Kodi-Logdateien in das Diagnosepaket aufgenommen werden.')
         return package_path
@@ -353,7 +353,7 @@ def _github_upload_file(file_path, filename, folder='logs'):
     """Base64-encode a local file incrementally before the Contents API upload."""
     file_size = os.path.getsize(file_path)
     if file_size <= 0 or file_size > MAX_PACKAGE_SIZE:
-        raise RuntimeError('Diagnosepaket fehlt oder überschreitet das Upload-Limit von 5 MB.')
+        raise RuntimeError('Diagnosepaket fehlt oder überschreitet das Upload-Limit von 20 MB.')
 
     file_descriptor, encoded_path = tempfile.mkstemp(
         prefix='kodi-upload-', suffix='.b64', dir=TEMP_DIR

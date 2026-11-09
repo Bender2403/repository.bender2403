@@ -3,6 +3,7 @@ Kodi Logfile Uploader (GitHub)
 
 Version 0.0.3
 -------------
+- Maximale Größe für Diagnosepakete von 5 MiB auf 20 MiB erhöht.
 - Diagnose-ZIP direkt als temporäre Datei auf Datenträger erstellen statt das gesamte Archiv im Arbeitsspeicher aufzubauen.
 - ZIP64 aktivieren und Diagnosepaket-Größe vor dem Upload prüfen.
 - ZIP-Datei beim GitHub-Upload blockweise Base64-kodieren und temporäre Dateien auch bei Fehlern entfernen.
