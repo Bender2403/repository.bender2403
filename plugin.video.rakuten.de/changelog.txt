@@ -1,0 +1,24 @@
+[B]Version 1.0.4+matrix.1  (23.08.2026)[/B]
+- fixed: Die Abfrage für GEO-CID und Landesflagge mit 'https://api.ipapi.is/' funktioniert nicht mehr (Neue URL zur Überprüfung)
+- fixed: Manche Ordner unter 'Genres & Kategorien' zeigen keinen Inhalt an
+- fixed: Bei vereinzelten VOD-Serien funktioniert die Anzeige der Episoden nicht (UnboundLocalError: local variable 'audio_titles' referenced ...)
+- fixed: Die Ordner unter der Rubrik 'TV - Kanäle' können nicht geöffnet werden (exception.invalid_per_page)
+- added: Rubrik = 'Alle TV-Serien'
+
+[B]Version 1.0.3+matrix.1  (02.11.2025)[/B]
+- fixed: Die Abfrage für GEO-CID und Landesflagge funktioniert nicht mehr (Error: 401 - Unauthorized)
+- fixed: Unter der Rubrik = 'Kostenlose VOD-Auswahl' werden nicht alle Kategorien gelistet (Neue Url)
+- added: LiveTV EPG-FIX für evtl. defekte JSON-Daten - thanks @fds97AVVS
+- added: Betriebssystem-Auswahl zum Abspielen von VoD-Streams = Windows/Android mit veränderten Requests-Parametern (settings - Android only not rooted) - thanks @ostvanc für die Unterstützung
+
+[B]Version 1.0.2+matrix.1  (20.04.2025)[/B]
+- optimized: Diverse Anpassungen für 'M3U-Listen-Erstellung' (bitte 'm3u' neu erstellen)
+
+[B]Version 1.0.1+matrix.1  (30.03.2025)[/B]
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+- Initial Release @realvito
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+- added: Rubriken = Eigene Watchlist-RakutenTV, Kostenlose VOD, Genres & Kategorien, Alle Filme, Suchfunktion und TV-Kanäle in der Übersicht (Browservariante)
+- added: Ausführliche Film-Informationen - Kontextmenü
+- added: Auswahl für landesspezifische RakutenTV-Version = Deutschland, Österreich und Schweiz (settings - Geoblocking)
+- added: Sprachauswahl für Audio/Untertitel (settings)

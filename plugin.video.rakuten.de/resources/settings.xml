@@ -1,0 +1,268 @@
+﻿<?xml version="1.0" ?>
+<settings version="1">
+	<section id="plugin.video.rakuten.de">
+		<category id="Allgemein VOD/TV" label="30000" help="">
+			<group id="1" label="30230">
+				<setting id="home_country" type="integer" label="30110" help="30350">
+					<level>0</level>
+					<default>0</default>
+					<constraints>
+						<options>
+							<option label="30111">0</option>
+							<option label="30112">1</option>
+							<option label="30113">2</option>
+						</options>
+					</constraints>
+					<control type="list" format="string">
+						<heading>30110</heading>
+					</control>
+				</setting>
+			</group>
+			<group id="2"/>
+			<group id="3" label="30231">
+				<setting id="operating_system" type="integer" label="30114" help="">
+					<level>0</level>
+					<default>0</default>
+					<constraints>
+						<options>
+							<option label="Windows">0</option>
+							<option label="Android">1</option>
+						</options>
+					</constraints>
+					<control type="spinner" format="string"/>
+				</setting>
+			</group>
+			<group id="4"/>
+			<group id="5" label="30232">
+				<setting id="maximum_vodentries" type="integer" label="30115" help="">
+					<level>0</level>
+					<default>40</default>
+					<constraints>
+						<minimum>30</minimum>
+						<step>10</step>
+						<maximum>80</maximum>
+					</constraints>
+					<control type="slider" format="integer">
+						<popup>false</popup>
+					</control>
+				</setting>
+			</group>
+			<group id="6"/>
+			<group id="7" label="30233">
+				<setting id="use_fanart" type="boolean" label="30116" help="">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="next_process" type="string" label="CREATION_TIME" help="">
+					<level>0</level>
+					<default>2026-01-01 00:01:00</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition on="property" name="InfoBool">false</condition>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="string">
+						<heading>CREATION_TIME</heading>
+					</control>
+				</setting>
+				<setting id="device_serial" type="string" label="ANDROID_SERIAL" help="">
+					<level>0</level>
+					<default>unknown</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition on="property" name="InfoBool">false</condition>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="string">
+						<heading>ANDROID_SERIAL</heading>
+					</control>
+				</setting>
+				<setting id="device_uid" type="string" label="PERSONAL_UID" help="">
+					<level>0</level>
+					<default>unknown</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition on="property" name="InfoBool">false</condition>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="string">
+						<heading>PERSONAL_UID</heading>
+					</control>
+				</setting>
+				<setting id="publisher_provided_id" type="string" label="PUBLISHER_ID" help="">
+					<level>0</level>
+					<default>unknown</default>
+					<dependencies>
+						<dependency type="visible">
+							<condition on="property" name="InfoBool">false</condition>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="string">
+						<heading>PUBLISHER_ID</heading>
+					</control>
+				</setting>
+			</group>
+		</category>
+		<category id="Audio/Untertitel VOD" label="30001" help="">
+			<group id="1" label="30234">
+				<setting id="prefer_vodaudio" type="integer" label="30120" help="30351">
+					<level>0</level>
+					<default>1</default>
+					<constraints>
+						<options>
+							<option label="30121">0</option>
+							<option label="30122">1</option>
+						</options>
+					</constraints>
+					<control type="spinner" format="string"/>
+				</setting>
+			</group>
+			<group id="2"/>
+			<group id="3" label="30235">
+				<setting id="show_vodsubs" type="boolean" label="30123" help="">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="vod_subtype" type="integer" label="30124" help="" parent="show_vodsubs">
+					<level>0</level>
+					<default>0</default>
+					<constraints>
+						<options>
+							<option label="30125">0</option>
+							<option label="30126">1</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="show_vodsubs">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="list" format="string">
+						<heading>30124</heading>
+					</control>
+				</setting>
+				<setting id="vod_sublanguage" type="integer" label="30127" help="" parent="show_vodsubs">
+					<level>0</level>
+					<default>0</default>
+					<constraints>
+						<options>
+							<option label="30128">0</option>
+							<option label="30129">1</option>
+							<option label="30130">2</option>
+							<option label="30131">3</option>
+							<option label="30132">4</option>
+							<option label="30133">5</option>
+							<option label="30134">6</option>
+							<option label="30135">7</option>
+							<option label="30136">8</option>
+							<option label="30137">9</option>
+							<option label="30138">10</option>
+							<option label="30139">11</option>
+							<option label="30140">12</option>
+							<option label="30141">13</option>
+							<option label="30142">14</option>
+							<option label="30143">15</option>
+							<option label="30144">16</option>
+							<option label="30145">17</option>
+							<option label="30146">18</option>
+							<option label="30147">19</option>
+							<option label="30148">20</option>
+							<option label="30149">21</option>
+							<option label="30150">22</option>
+							<option label="30151">23</option>
+							<option label="30152">24</option>
+							<option label="30153">25</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="show_vodsubs">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="list" format="string">
+						<heading>30127</heading>
+					</control>
+				</setting>
+			</group>
+		</category>
+		<category id="M3U-Listenexport TV" label="30002" help="">
+			<group id="1" label="30236">
+				<setting id="naming_m3u" type="string" label="30170" help="30352">
+					<level>0</level>
+					<default>rakuten_iptv</default>
+					<control type="edit" format="string">
+						<heading>30170</heading>
+					</control>
+				</setting>
+				<setting id="media_path" type="path" label="30171" help="" parent="naming_m3u">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<writable>false</writable>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="button" format="path">
+						<heading>30171</heading>
+					</control>
+				</setting>
+				<setting id="creating_m3u" type="action" label="30172" help="30353" parent="naming_m3u">
+					<level>0</level>
+					<data>RunPlugin(plugin://plugin.video.rakuten.de?mode=generate_personaltv)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<and>
+								<condition operator="!is" setting="naming_m3u"/>
+								<condition operator="!is" setting="media_path"/>
+							</and>
+						</dependency>
+					</dependencies>
+					<control type="button" format="action">
+						<close>true</close>
+					</control>
+				</setting>
+			</group>
+		</category>
+		<category id="Settings/Debug" label="30003" help="">
+			<group id="1" label="30237">
+				<setting id="show_settings" type="boolean" label="30180" help="">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="field_spread" type="integer" label="30181" help="" parent="show_settings">
+					<level>0</level>
+					<default>0</default>
+					<constraints>
+						<options>
+							<option label="30182">0</option>
+							<option label="30183">1</option>
+							<option label="30184">2</option>
+							<option label="30185">3</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="visible">
+							<condition operator="is" setting="show_settings">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="list" format="string">
+						<heading>30181</heading>
+					</control>
+				</setting>
+			</group>
+			<group id="2"/>
+			<group id="3" label="30238">
+				<setting id="enable_debug" type="boolean" label="30186" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+		</category>
+	</section>
+</settings>

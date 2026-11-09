@@ -1,0 +1,614 @@
+﻿# Kodi Media Center language file
+# Addon Name: RakutenTV German (light)
+# Addon id: plugin.video.rakuten.de
+# Addon Provider: realvito
+msgid ""
+msgstr ""
+"Project-Id-Version: KODI-Addons\n"
+"Report-Msgid-Bugs-To: alanwww1@kodi.org\n"
+"POT-Creation-Date: 2025-03-29 18:00+0000\n"
+"PO-Revision-Date: 2026-08-22 16:00+0000\n"
+"Last-Translator: realvito\n"
+"Language-Team: ENGLISH\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en_GB\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# strings start
+# SETTINGS-CATEGORIES
+
+msgctxt "#30000"
+msgid "General VOD/TV"
+msgstr ""
+
+msgctxt "#30001"
+msgid "Audio/Subtitles VOD"
+msgstr ""
+
+msgctxt "#30002"
+msgid "M3U list export TV"
+msgstr ""
+
+msgctxt "#30003"
+msgid "Settings/Debug"
+msgstr ""
+
+# empty strings from id 30004 to 30109
+# SETTINGS-BUTTONS = General VOD/TV
+
+msgctxt "#30110"
+msgid "[COLOR yellow]Residence of the user[/COLOR]"
+msgstr ""
+
+msgctxt "#30111"# Option: 0
+msgid "[B]Germany[/B]"
+msgstr ""
+
+msgctxt "#30112"# Option: 1
+msgid "[B]Austria[/B]"
+msgstr ""
+
+msgctxt "#30113"# Option: 2
+msgid "[B]Switzerland[/B]"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Preferred operating system"
+msgstr ""
+
+msgctxt "#30115"
+msgid "Number of entries per page"
+msgstr ""
+
+msgctxt "#30116"
+msgid "Use Thumb as Background-Fanart"
+msgstr ""
+
+# empty strings from id 30117 to 30119
+# SETTINGS-BUTTONS = Audio/Subtitles VOD
+
+msgctxt "#30120"
+msgid "Audio - Language"
+msgstr ""
+
+msgctxt "#30121"
+msgid "[B][COLOR chartreuse]► Manual: Infobox Audio selection ◄[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30122"
+msgid "[B]Always select German[/B]"
+msgstr ""
+
+msgctxt "#30123"
+msgid "Show Video-Subtitles [COLOR yellow](if available)[/COLOR]"
+msgstr ""
+
+msgctxt "#30124"
+msgid "Subtitles - Format"
+msgstr ""
+
+msgctxt "#30125"
+msgid "[B][COLOR chartreuse]Standard Subtitles[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30126"
+msgid "[B][COLOR yellow]Forced Subtitles[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30127"
+msgid "Subtitle - Language"
+msgstr ""
+
+msgctxt "#30128"# Option: 0
+msgid "[B][COLOR chartreuse]► Manual: Infobox Language selection ◄[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30129"# Option: 1
+msgid "[B]Bulgarian[/B]"
+msgstr ""
+
+msgctxt "#30130"# Option: 2
+msgid "[B]Danish[/B]"
+msgstr ""
+
+msgctxt "#30131"# Option: 3
+msgid "[B]German[/B]"
+msgstr ""
+
+msgctxt "#30132"# Option: 4
+msgid "[B]English[/B]"
+msgstr ""
+
+msgctxt "#30133"# Option: 5
+msgid "[B]Finnish[/B]"
+msgstr ""
+
+msgctxt "#30134"# Option: 6
+msgid "[B]French[/B]"
+msgstr ""
+
+msgctxt "#30135"# Option: 7
+msgid "[B]Greek[/B]"
+msgstr ""
+
+msgctxt "#30136"# Option: 8
+msgid "[B]Italian[/B]"
+msgstr ""
+
+msgctxt "#30137"# Option: 9
+msgid "[B]Catalan[/B]"
+msgstr ""
+
+msgctxt "#30138"# Option: 10
+msgid "[B]Croatian[/B]"
+msgstr ""
+
+msgctxt "#30139"# Option: 11
+msgid "[B]Lithuanian[/B]"
+msgstr ""
+
+msgctxt "#30140"# Option: 12
+msgid "[B]Dutch[/B]"
+msgstr ""
+
+msgctxt "#30141"# Option: 13
+msgid "[B]Norwegian[/B]"
+msgstr ""
+
+msgctxt "#30142"# Option: 14
+msgid "[B][COLOR yellow]Without Subtitles[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30143"# Option: 15
+msgid "[B]Polish[/B]"
+msgstr ""
+
+msgctxt "#30144"# Option: 16
+msgid "[B]Portuguese[/B]"
+msgstr ""
+
+msgctxt "#30145"# Option: 17
+msgid "[B]Romanian[/B]"
+msgstr ""
+
+msgctxt "#30146"# Option: 18
+msgid "[B]Russian[/B]"
+msgstr ""
+
+msgctxt "#30147"# Option: 19
+msgid "[B]Swedish[/B]"
+msgstr ""
+
+msgctxt "#30148"# Option: 20
+msgid "[B]Slovenian[/B]"
+msgstr ""
+
+msgctxt "#30149"# Option: 21
+msgid "[B]Spanish[/B]"
+msgstr ""
+
+msgctxt "#30150"# Option: 22
+msgid "[B]Turkish[/B]"
+msgstr ""
+
+msgctxt "#30151"# Option: 23
+msgid "[B]Czech[/B]"
+msgstr ""
+
+msgctxt "#30152"# Option: 24
+msgid "[B]Ukrainian[/B]"
+msgstr ""
+
+msgctxt "#30153"# Option: 25
+msgid "[B]Hungarian[/B]"
+msgstr ""
+
+# empty strings from id 30154 to 30169
+# SETTINGS-BUTTONS = M3U list export TV
+
+msgctxt "#30170"
+msgid "Designation of the file [COLOR yellow](without '.m3u')[/COLOR]"
+msgstr ""
+
+msgctxt "#30171"
+msgid "Search folder for file..."
+msgstr ""
+
+msgctxt "#30172"
+msgid "[B][COLOR chartreuse]<<<>>> CREATE M3U - LIST <<<>>>[/COLOR][/B]"
+msgstr ""
+
+# empty strings from id 30173 to 30179
+# SETTINGS-BUTTONS = Settings/Debug
+
+msgctxt "#30180"
+msgid "Show Addon-Settings in the overview"
+msgstr ""
+
+msgctxt "#30181"
+msgid "Arrangement of Text :"
+msgstr ""
+
+msgctxt "#30182"
+msgid "[B][COLOR lime]Settings afterwards GEO-CID (default)[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30183"
+msgid "[B][COLOR yellow]GEO-CID afterwards Settings[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30184"
+msgid "[B][COLOR yellow]Only GEO-CID[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30185"
+msgid "[B][COLOR yellow]Only Settings[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30186"
+msgid "Detailed Addon-Debug (otherwise only Minimal-Log)"
+msgstr ""
+
+# empty strings from id 30187 to 30229
+# SETTINGS-TITLES
+
+msgctxt "#30230"
+msgid "[B][COLOR ff0099ff]LOCATION[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30231"
+msgid "[B][COLOR ff0099ff]VOD-PLATFORM[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30232"
+msgid "[B][COLOR ff0099ff]VOD-ENTRIES[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30233"
+msgid "[B][COLOR ff0099ff]FANART[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30234"
+msgid "[B][COLOR ff0099ff]AUDIO-VOD[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30235"
+msgid "[B][COLOR ff0099ff]SUBTITLES-VOD[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30236"
+msgid "[B][COLOR ff0099ff]COMPILATION[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30237"
+msgid "[B][COLOR ff0099ff]SETTINGS[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30238"
+msgid "[B][COLOR ff0099ff]LOG[/COLOR][/B]"
+msgstr ""
+
+# empty strings from id 30239 to 30349
+# SETTINGS-DESCRIPTIONS
+
+msgctxt "#30350"
+msgid "[B][COLOR yellow]ATTENTION: This provider uses the following technologies:[/COLOR] ►[COLOR orange]Geoblocking and blocking of VoD-DRM-Streams on various Systems[/COLOR]◄ [COLOR yellow]!!![/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30351"
+msgid "[COLOR chartreuse]If [/COLOR][B][COLOR yellow]Always select German[/COLOR][B][COLOR chartreuse] is activated, the [B][COLOR yellow]► Infobox with audio selection ◄[/COLOR][B] is only displayed if NO audio language in [B]German[/B] is available for the video.[/COLOR]"
+msgstr ""
+
+msgctxt "#30352"
+msgid "[B][COLOR yellow]NOTICE: The file extension[/COLOR] ►[COLOR chartreuse].m3u[/COLOR]◄ [COLOR yellow]is set automatically !!![/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30353"
+msgid "[B][COLOR yellow]NOTICE: For integration into the 'IPTV Simple Client' with the required EPG Data, the installation of the Addon:[/COLOR] ►[COLOR chartreuse]service.rakuten.epgrefresh[/COLOR]◄ [COLOR yellow]is recommended !!![/COLOR][/B]"
+msgstr ""
+
+# empty strings from id 30354 to 30500
+# WARNING/INFORMATION-MESSAGES-OK
+
+msgctxt "#30501"
+msgid "[COLOR orangered]ATTENTION : ... the required Addon ►[/COLOR][COLOR yellow]{}[/COLOR][COLOR orangered]◄ can NOT be activated automatically !!![/COLOR]"
+msgstr ""
+
+msgctxt "#30502"
+msgid "[COLOR orangered]ATTENTION : ... the required Addon ►[/COLOR][COLOR yellow]{}[/COLOR][COLOR orangered]◄ is NOT installed !!![/COLOR]"
+msgstr ""
+
+msgctxt "#30503"
+msgid "[B][COLOR orangered]ATTENTION : ... NO file name or destination folder has been defined yet !!![/COLOR][CR]Please specify the file name and the target directory !!![/B]"
+msgstr ""
+
+msgctxt "#30504"
+msgid "[B][COLOR yellow]You have not selected a channel in the list !!![/COLOR][/B][CR]Therefore the action will now be cancelled !!!"
+msgstr ""
+
+# empty strings from id 30505 to 30520
+# WARNING/INFORMATION-MESSAGES-NOTIFICATION
+
+msgctxt "#30521"
+msgid "RakutenTV : [COLOR orangered]!!! {} - ERROR !!![/COLOR]"
+msgstr ""
+
+msgctxt "#30522"
+msgid "[COLOR orangered]An error has occured, please check *LOG* ![/COLOR]"
+msgstr ""
+
+msgctxt "#30523"
+msgid "[B]DETAILS: [COLOR orangered]{} ![/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30524"
+msgid "[COLOR orangered]Required additional Data could NOT be resolved (LOG) ![/COLOR]"
+msgstr ""
+
+msgctxt "#30525"
+msgid "[COLOR orangered]Unfortunately, there are NO Entries under :[/COLOR]"
+msgstr ""
+
+msgctxt "#30526"
+msgid "[B]≡ [COLOR blue]{}[/COLOR] ≡ at RakutenTV[/B]"
+msgstr ""
+
+msgctxt "#30527"
+msgid "[B]≡ [COLOR blue]Standard Subtitles[/COLOR] ≡ at RakutenTV[/B]"
+msgstr ""
+
+msgctxt "#30528"
+msgid "[B]≡ [COLOR blue]Forced Subtitles[/COLOR] ≡ at RakutenTV[/B]"
+msgstr ""
+
+msgctxt "#30529"
+msgid "[B][COLOR orangered]The requested *StreamLink* was blocked or does NOT exist ![/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30530"
+msgid "[B][COLOR orangered]The requested *StreamLink* does NOT exist ![/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30531"
+msgid "My Rakuten - Watchlist :"
+msgstr ""
+
+msgctxt "#30532"
+msgid "[B]≡ [COLOR blue]{}[/COLOR] ≡ [COLOR lime]successfully added !!![/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30533"
+msgid "[B]≡ [COLOR blue]{}[/COLOR] ≡ [COLOR orangered]has been deleted !!![/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30534"
+msgid "[COLOR yellow][B]PLEASE WAIT:[/B] Generate Channel-Selection...[/COLOR]"
+msgstr ""
+
+msgctxt "#30535"
+msgid "[COLOR lime]Generate M3U-List...[/COLOR]"
+msgstr ""
+
+msgctxt "#30536"
+msgid "[B][COLOR lime]The M3U-List has been created successfully ![/COLOR][/B]"
+msgstr ""
+
+# empty strings from id 30537 to 30600
+# PLUGIN-MAIN
+
+msgctxt "#30601"
+msgid "[B][COLOR chartreuse]★ My RAKUTEN Watchlist ★[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30602"
+msgid "[B]Free VOD - Selection[/B]"
+msgstr ""
+
+msgctxt "#30603"
+msgid "[B]Genres & Categories[/B]"
+msgstr ""
+
+msgctxt "#30604"
+msgid "[B]All Movies[/B]"
+msgstr ""
+
+msgctxt "#30605"
+msgid "[B]All TV-Series[/B]"
+msgstr ""
+
+msgctxt "#30606"
+msgid "[B]Search ...[/B]"
+msgstr ""
+
+msgctxt "#30607"
+msgid "[B]TV - Channels[/B]"
+msgstr ""
+
+msgctxt "#30610"
+msgid "[COLOR FF00FFFF]*** (GEO-CID ► {} [{}] ◄) ***  [/COLOR]"
+msgstr ""
+
+msgctxt "#30611"
+msgid "RakutenTV Settings  "
+msgstr ""
+
+msgctxt "#30612"
+msgid "Inputstream Settings"
+msgstr ""
+
+# empty strings from id 30613 to 30619
+# list_broadcasts and search_rktv - FOLDER
+
+msgctxt "#30620"
+msgid "{}[CR][CR][B][COLOR gold]Productionyear(s): [/COLOR][/B]{}"
+msgstr ""
+
+msgctxt "#30621"
+msgid "[COLOR lime]Next Page ({})  >>>[/COLOR]"
+msgstr ""
+
+msgctxt "#30622"
+msgid "[COLOR yellow]Selection: Category[/COLOR]"
+msgstr ""
+
+msgctxt "#30623"
+msgid "[B]Movies[/B]"
+msgstr ""
+
+msgctxt "#30624"
+msgid "[B]Series/Shows[/B]"
+msgstr ""
+
+msgctxt "#30625"
+msgid "Search on RakutenTV ..."
+msgstr ""
+
+# empty strings from id 30626 to 30629
+# point_infos - FOLDER
+
+msgctxt "#30630"
+msgid "[B][COLOR lime]{}[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30631"
+msgid "  (Original: {})[CR]"
+msgstr ""
+
+msgctxt "#30632"
+msgid "[B][COLOR gold]Productionyear:[/COLOR][/B] {}[CR]"
+msgstr ""
+
+msgctxt "#30633"
+msgid "[B][COLOR gold]Runtime:[/COLOR][/B] {} Minutes[CR]"
+msgstr ""
+
+msgctxt "#30634"
+msgid "[B][COLOR gold]Genre:[/COLOR][/B] {}[CR]"
+msgstr ""
+
+msgctxt "#30635"
+msgid "[B][COLOR gold]Country:[/COLOR][/B] {}[CR]"
+msgstr ""
+
+msgctxt "#30636"
+msgid "[B][COLOR gold]Actors:[/COLOR][/B] {}[CR]"
+msgstr ""
+
+msgctxt "#30637"
+msgid "[B][COLOR gold]Regie:[/COLOR][/B] {}[CR]"
+msgstr ""
+
+msgctxt "#30638"
+msgid "[B][COLOR gold]Studio:[/COLOR][/B] {}[CR]"
+msgstr ""
+
+msgctxt "#30639"
+msgid "[B][COLOR gold]Vacate:[/COLOR][/B] {}[CR]"
+msgstr ""
+
+msgctxt "#30640"
+msgid "[B][COLOR gold]IMDb-Rating:[/COLOR][/B] {}[CR]"
+msgstr ""
+
+msgctxt "#30641"
+msgid "No Data available !"
+msgstr ""
+
+msgctxt "#30642"
+msgid "MOVIE - INFORMATIONS"
+msgstr ""
+
+# empty strings from id 30643 to 30649
+# list_seasons - FOLDER
+
+msgctxt "#30650"
+msgid "Season {}"
+msgstr ""
+
+# empty strings from id 30651 to 30659
+# get_languages - FOLDER
+
+msgctxt "#30660"
+msgid "[B][COLOR gold]Audio: [/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30661"
+msgid "[B][COLOR gold]Subtitles: [/COLOR][/B]"
+msgstr ""
+
+# empty strings from id 30662 to 30669
+# create_substances - FOLDER
+
+msgctxt "#30670"
+msgid "[COLOR yelllow]{}[/COLOR][CR]"
+msgstr ""
+
+msgctxt "#30671"
+msgid "[COLOR chartreuse]S{}E{}:[/COLOR] {}"
+msgstr ""
+
+msgctxt "#30672"
+msgid "[B][COLOR deepskyblue]Season {} • Episode {}[/COLOR][/B][CR]"
+msgstr ""
+
+msgctxt "#30673"
+msgid "[COLOR chartreuse]S{}:[/COLOR] {}"
+msgstr ""
+
+msgctxt "#30674"
+msgid "[B][COLOR deepskyblue]Season {}[/COLOR][/B][CR]"
+msgstr ""
+
+# empty strings from id 30675 to 30689
+# playVideo - FOLDER
+
+msgctxt "#30690"
+msgid "[COLOR yellow]Selection: Audio - Language[/COLOR]"
+msgstr ""
+
+msgctxt "#30691"
+msgid "[COLOR yellow]Selection: Subtitle - Language[/COLOR]"
+msgstr ""
+
+# empty strings from id 30692 to 30700
+# fetch_guides - FOLDER
+
+msgctxt "#30701"
+msgid "Time: [B][COLOR chartreuse]{} ~ {}[/COLOR][/B][CR][COLOR yellow]{}[/COLOR][CR]{}"
+msgstr ""
+
+msgctxt "#30702"
+msgid "Time: [B][COLOR chartreuse]{} ~ {}[/COLOR][/B][CR][COLOR yellow]{}[/COLOR][CR][COLOR deepskyblue]{}[/COLOR][CR]{}"
+msgstr ""
+
+# empty strings from id 30703 to 30710
+# generate_personaltv - FOLDER
+
+msgctxt "#30711"
+msgid "★ ★ ★ [COLOR lime]SELECTING ALL[/COLOR] ★ ★ ★"
+msgstr ""
+
+msgctxt "#30712"
+msgid "[B]{} • {}[/B]"
+msgstr ""
+
+msgctxt "#30713"
+msgid "Select desired Channels (multiple selection possible)"
+msgstr ""
+
+# empty strings from id 30714 to 30720
+# context_menu - COMMANDS
+
+msgctxt "#30721"
+msgid "[I][B][COLOR cyan]More Infos about the Video...[/COLOR][/B][/I]"
+msgstr ""
+
+msgctxt "#30722"
+msgid "[B][COLOR chartreuse]Add to RAKUTEN-Watchlist...[/COLOR][/B]"
+msgstr ""
+
+msgctxt "#30723"
+msgid "[B][COLOR orange]...Remove from RAKUTEN-Watchlist[/COLOR][/B]"
+msgstr ""
