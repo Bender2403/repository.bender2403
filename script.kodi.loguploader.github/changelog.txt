@@ -1,6 +1,10 @@
 Kodi Logfile Uploader (GitHub)
 ==============================
 
+Version 0.0.8
+-------------
+- Nach dem Bestätigen oder Abbrechen der Add-on-Auswahl wird wieder das Hauptmenü angezeigt. Die Menüschleife gilt nur für diesen Menüpunkt; Upload- und Diagnoseaktionen behalten ihr bisheriges Verhalten.
+
 Version 0.0.7
 -------------
 - Add-on-Auswahlliste zeigt nur noch aktivierte Add-ons; deaktivierte Add-ons werden bereits durch Kodi JSON-RPC herausgefiltert und zusätzlich im Add-on-Code ausgeschlossen.

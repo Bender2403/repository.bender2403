@@ -4,7 +4,7 @@ Diese eigenständige Version basiert auf Ronies Add-on `script.kodi.loguploader`
 
 **Anzeigename:** Kodi Logfile Uploader (GitHub)  
 **Add-on-ID:** `script.kodi.loguploader.github`  
-**Version:** `0.0.7`  
+**Version:** `0.0.8`  
 
 **GitHub ist das voreingestellte Upload-Ziel.** Der bisherige Dienst `paste.kodi.tv` bleibt als alternative Upload-Möglichkeit erhalten.
 
@@ -23,7 +23,7 @@ Diese eigenständige Version basiert auf Ronies Add-on `script.kodi.loguploader`
 
 ## So funktioniert der Upload
 
-Beim Start erscheint direkt das Hauptmenü. Über den Menüpunkt **Add-ons zur Protokollpriorisierung auswählen** kannst du festlegen, für welche aktivierten Add-ons Logmeldungen bei der Diagnose bevorzugt werden. Deaktivierte Add-ons werden nicht angezeigt. Die Auswahl wird gespeichert und kann jederzeit über diesen Menüpunkt geändert werden.
+Beim Start erscheint direkt das Hauptmenü. Über den Menüpunkt **Add-ons zur Protokollpriorisierung auswählen** kannst du festlegen, für welche aktivierten Add-ons Logmeldungen bei der Diagnose bevorzugt werden. Deaktivierte Add-ons werden nicht angezeigt. Die Auswahl wird gespeichert und kann jederzeit über diesen Menüpunkt geändert werden. Nach dem Bestätigen kehrt das Add-on automatisch zum Hauptmenü zurück.
 
 Große Logs bis 10 MiB werden eingelesen. Fehler, Warnungen, Tracebacks, Meldungen der ausgewählten Add-ons und der jeweilige Kontext werden bevorzugt. Wiederholte identische Meldungen werden zusammengefasst. Bereinigte Originale werden zusätzlich beigelegt, sofern sie höchstens 2 MiB groß sind.
 

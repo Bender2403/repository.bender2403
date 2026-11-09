@@ -594,9 +594,17 @@ def main():
     ]
     try:
         _debug('Uploader gestartet; Add-on-Version %s.' % ADDON_VERSION)
-        choice = dialog.select(ADDON_NAME, choices)
-        if choice < 0:
-            return
+        # Keep the main menu open after the add-on selection dialog returns.
+        # Other actions retain their existing one-shot behavior.
+        while True:
+            choice = dialog.select(ADDON_NAME, choices)
+            if choice < 0:
+                return
+            if choice == 4:
+                _select_relevant_addons(dialog)
+                continue
+            break
+
         if choice == 0:
             destination = _upload_normal_log()
             _log('Logdatei erfolgreich hochgeladen: %s' % destination)
@@ -611,8 +619,6 @@ def main():
         elif choice == 3:
             restored = _restore_diagnostics()
             dialog.ok(ADDON_NAME, _s(32025, 'The original Kodi logging settings have been restored.') if restored else _s(32026, 'There is no active diagnostic session.'))
-        elif choice == 4:
-            _select_relevant_addons(dialog)
     except Exception as exc:
         _log('Vorgang fehlgeschlagen: %s' % exc, xbmc.LOGERROR)
         dialog.ok(ADDON_NAME, _s(32027, 'Operation failed: {error}').format(error=str(exc)))
