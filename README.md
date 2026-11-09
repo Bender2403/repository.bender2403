@@ -31,4 +31,4 @@ Bei Änderungen am Repository-Add-on muss dessen Versionsnummer in `addons/repos
 
 Neue Add-ons werden nur aufgenommen, wenn sie als Quellordner unter `addons/` liegen.
 
-**Rakuten TV und RTL+ sind ausdrücklich nicht Bestandteil dieses Repositorys.**
+**RTL+ ist derzeit nicht Bestandteil dieses Repositorys. Rakuten TV wird als externes ZIP aus dem Branch `original-addons` des Quell-Repositories eingebunden.**

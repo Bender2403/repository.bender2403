@@ -36,6 +36,13 @@ EXTERNAL_ZIPS = [
     },
     {
         "repository": "Bender2403/kodi-rakuten-tv-addon",
+        "ref": "original-addons",
+        "path": "plugin.video.rakuten.de-1.0.4+matrix.1.zip",
+        "addon_id": "plugin.video.rakuten.de",
+        "version": "1.0.4+matrix.1",
+    },
+    {
+        "repository": "Bender2403/kodi-rakuten-tv-addon",
         "ref": "kodi-logs",
         "path": "dist/script.kodi.loguploader.github-0.0.1.zip",
         "addon_id": "script.kodi.loguploader.github",
