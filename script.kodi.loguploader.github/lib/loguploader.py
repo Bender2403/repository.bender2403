@@ -16,6 +16,12 @@ import xbmcvfs
 
 ADDON = xbmcaddon.Addon()
 ADDON_ID = ADDON.getAddonInfo('id')
+
+
+def _s(string_id, fallback=''):
+    """Return a translated Kodi string, falling back if unavailable."""
+    value = ADDON.getLocalizedString(string_id)
+    return value or fallback
 ADDON_NAME = ADDON.getAddonInfo('name')
 ADDON_VERSION = ADDON.getAddonInfo('version')
 LOG_DIR = xbmcvfs.translatePath('special://logpath')
@@ -78,7 +84,7 @@ def _read_vfs_file(path, limit):
 def _read_log():
     content = _read_vfs_file(LOG_FILE, MAX_LOG_SIZE)
     if not content:
-        raise RuntimeError('kodi.log wurde nicht gefunden, ist leer oder größer als 2 MB.')
+        raise RuntimeError(_s(32028, 'kodi.log was not found, is empty or exceeds 2 MB.'))
     return _clean_log(content)
 
 
@@ -88,14 +94,14 @@ def _jsonrpc(method, params=None):
         request['params'] = params
     response = json.loads(xbmc.executeJSONRPC(json.dumps(request)))
     if 'error' in response:
-        raise RuntimeError(response['error'].get('message', 'Kodi-JSON-RPC-Fehler'))
+        raise RuntimeError(response['error'].get('message', _s(32030, 'Kodi JSON-RPC error')))
     return response.get('result')
 
 
 def _get_debug_state():
     result = _jsonrpc('Settings.GetSettingValue', {'setting': 'debug.showloginfo'})
     if not isinstance(result, dict) or 'value' not in result:
-        raise RuntimeError('Kodi stellt den globalen Debug-Schalter nicht bereit.')
+        raise RuntimeError(_s(32029, 'Kodi does not expose the global debug switch.'))
     return bool(result['value'])
 
 
@@ -134,11 +140,11 @@ def _delete_state():
 
 
 def _start_diagnostics(dialog):
-    if not dialog.yesno(ADDON_NAME, 'Kodi-weites Debug-Logging aktivieren?\n\nWährend der Diagnose können mehr technische Details und Stream-Adressen im lokalen Kodi-Log erscheinen. Vor dem Upload werden bekannte Zugangsdaten und URL-Parameter bereinigt.'):
+    if not dialog.yesno(_s(32015, 'Kodi Logfile Uploader'), _s(32016, 'Enable Kodi-wide debug logging?') + '\n\n' + _s(32017, 'During diagnostics, more technical details and stream addresses may appear in the local Kodi log. Known credentials and URL parameters are sanitized before upload.')):
         return
     state = _load_state()
     if state:
-        dialog.ok(ADDON_NAME, 'Eine Diagnose ist bereits aktiv. Nach der Fehler-Reproduktion bitte das Diagnosepaket erstellen oder die Einstellungen wiederherstellen.')
+        dialog.ok(ADDON_NAME, _s(32018, 'A diagnostic session is already active. After reproducing the issue, create the diagnostic package or restore the settings.'))
         return
     original = _get_debug_state()
     _save_state({'original_debug': original, 'changed': not original})
@@ -148,7 +154,7 @@ def _start_diagnostics(dialog):
     except Exception:
         _delete_state()
         raise
-    dialog.ok(ADDON_NAME, 'Diagnosemodus ist aktiv.\n\nReproduziere jetzt den Fehler. Danach dieses Add-on erneut starten und „Diagnosepaket erstellen und hochladen“ wählen.')
+    dialog.ok(ADDON_NAME, _s(32019, 'Diagnostic mode is active.') + '\n\n' + _s(32020, 'Reproduce the issue now. Then start this add-on again and choose the diagnostic package option.'))
 
 
 def _restore_diagnostics():
@@ -296,9 +302,9 @@ def _github_upload_bytes(data, filename, folder='logs'):
     repo = ADDON.getSetting('github_repo').strip() or 'Bender2403/kodi-rakuten-tv-addon'
     branch = ADDON.getSetting('github_branch').strip() or 'kodi-logs'
     if not token:
-        raise RuntimeError('GitHub-Token fehlt. Bitte in den Add-on-Einstellungen eintragen.')
+        raise RuntimeError(_s(32031, 'GitHub token is missing. Enter it in the add-on settings.'))
     if not re.match(r'^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$', repo):
-        raise RuntimeError('Ungültiger Repository-Name. Erwartet wird owner/repository.')
+        raise RuntimeError(_s(32032, 'Invalid repository name. Expected owner/repository.'))
     path = folder + '/' + filename
     url = '%s/repos/%s/contents/%s' % (API_ROOT, repo, path)
     payload = {
@@ -318,7 +324,7 @@ def _github_upload_bytes(data, filename, folder='logs'):
             detail = response.json().get('message', '')
         except Exception:
             detail = ''
-        raise RuntimeError('GitHub-Upload fehlgeschlagen (HTTP %s): %s' % (response.status_code, detail or response.text[:300]))
+        raise RuntimeError(_s(32033, 'GitHub upload failed (HTTP {status}): {detail}').format(status=response.status_code, detail=detail or response.text[:300]))
     return 'https://github.com/%s/blob/%s/%s' % (repo, branch, path)
 
 
@@ -356,10 +362,10 @@ def _upload_diagnostic_package():
 def main():
     dialog = xbmcgui.Dialog()
     choices = [
-        'Kodi-Log normal hochladen',
-        'Diagnosemodus starten (Kodi-weites Debug-Logging)',
-        'Diagnosepaket erstellen und hochladen',
-        'Debug-Einstellungen wiederherstellen',
+        _s(32011, 'Upload Kodi log normally'),
+        _s(32012, 'Start diagnostics (Kodi-wide debug logging)'),
+        _s(32013, 'Create and upload diagnostic package'),
+        _s(32014, 'Restore debug settings'),
     ]
     try:
         choice = dialog.select(ADDON_NAME, choices)
@@ -368,17 +374,17 @@ def main():
         if choice == 0:
             destination = _upload_normal_log()
             _log('Logdatei erfolgreich hochgeladen: %s' % destination)
-            dialog.ok(ADDON_NAME, 'Upload erfolgreich.\n\n' + destination)
+            dialog.ok(ADDON_NAME, _s(32022, 'Upload successful.') + '\n\n' + destination)
         elif choice == 1:
             _start_diagnostics(dialog)
         elif choice == 2:
             destination, restored = _upload_diagnostic_package()
-            note = 'Die ursprünglichen Kodi-Logging-Einstellungen wurden wiederhergestellt.\n\n' if restored else ''
+            note = _s(32023, 'The original Kodi logging settings have been restored.') + '\n\n' if restored else ''
             _log('Diagnosepaket erfolgreich hochgeladen: %s' % destination)
-            dialog.ok(ADDON_NAME, note + 'Diagnosepaket hochgeladen.\n\n' + destination)
+            dialog.ok(ADDON_NAME, note + _s(32024, 'Diagnostic package uploaded.') + '\n\n' + destination)
         elif choice == 3:
             restored = _restore_diagnostics()
-            dialog.ok(ADDON_NAME, 'Ursprüngliche Kodi-Logging-Einstellungen wurden wiederhergestellt.' if restored else 'Es ist keine aktive Diagnose gespeichert.')
+            dialog.ok(ADDON_NAME, _s(32025, 'The original Kodi logging settings have been restored.') if restored else _s(32026, 'There is no active diagnostic session.'))
     except Exception as exc:
         _log('Vorgang fehlgeschlagen: %s' % exc, xbmc.LOGERROR)
-        dialog.ok(ADDON_NAME, 'Vorgang fehlgeschlagen:\n\n%s' % str(exc))
+        dialog.ok(ADDON_NAME, _s(32027, 'Operation failed: {error}').format(error=str(exc)))

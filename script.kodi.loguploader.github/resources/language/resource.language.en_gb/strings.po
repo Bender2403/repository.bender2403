@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Kodi Logfile Uploader (GitHub) 0.0.2\n"
+"Project-Id-Version: Kodi Logfile Uploader (GitHub) 0.0.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-09 00:00+0000\n"
 "PO-Revision-Date: 2026-11-09 00:00+0000\n"
@@ -9,42 +9,130 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgctxt "#30000"
+msgctxt "#32000"
 msgid "General"
 msgstr "General"
 
-msgctxt "#30001"
+msgctxt "#32001"
 msgid "GitHub Upload"
 msgstr "GitHub Upload"
 
-msgctxt "#30002"
+msgctxt "#32002"
 msgid "Upload target"
 msgstr "Upload target"
 
-msgctxt "#30003"
+msgctxt "#32003"
 msgid "GitHub (default)"
 msgstr "GitHub (default)"
 
-msgctxt "#30004"
+msgctxt "#32004"
 msgid "paste.kodi.tv"
 msgstr "paste.kodi.tv"
 
-msgctxt "#30005"
+msgctxt "#32005"
 msgid "GitHub repository"
 msgstr "GitHub repository"
 
-msgctxt "#30006"
+msgctxt "#32006"
 msgid "GitHub branch"
 msgstr "GitHub branch"
 
-msgctxt "#30007"
+msgctxt "#32007"
 msgid "GitHub fine-grained token"
 msgstr "GitHub fine-grained token"
 
-msgctxt "#30008"
+msgctxt "#32008"
 msgid "Expert"
 msgstr "Expert"
 
-msgctxt "#30010"
+msgctxt "#32010"
 msgid "Authentication"
 msgstr "Authentication"
+
+msgctxt "#32011"
+msgid "Upload Kodi log normally"
+msgstr "Upload Kodi log normally"
+
+msgctxt "#32012"
+msgid "Start diagnostics (Kodi-wide debug logging)"
+msgstr "Start diagnostics (Kodi-wide debug logging)"
+
+msgctxt "#32013"
+msgid "Create and upload diagnostic package"
+msgstr "Create and upload diagnostic package"
+
+msgctxt "#32014"
+msgid "Restore debug settings"
+msgstr "Restore debug settings"
+
+msgctxt "#32015"
+msgid "Kodi Logfile Uploader"
+msgstr "Kodi Logfile Uploader"
+
+msgctxt "#32016"
+msgid "Enable Kodi-wide debug logging?"
+msgstr "Enable Kodi-wide debug logging?"
+
+msgctxt "#32017"
+msgid "During diagnostics, more technical details and stream addresses may appear in the local Kodi log. Known credentials and URL parameters are sanitized before upload."
+msgstr "During diagnostics, more technical details and stream addresses may appear in the local Kodi log. Known credentials and URL parameters are sanitized before upload."
+
+msgctxt "#32018"
+msgid "A diagnostic session is already active. After reproducing the issue, create the diagnostic package or restore the settings."
+msgstr "A diagnostic session is already active. After reproducing the issue, create the diagnostic package or restore the settings."
+
+msgctxt "#32019"
+msgid "Diagnostic mode is active."
+msgstr "Diagnostic mode is active."
+
+msgctxt "#32020"
+msgid "Reproduce the issue now. Then start this add-on again and choose the diagnostic package option."
+msgstr "Reproduce the issue now. Then start this add-on again and choose the diagnostic package option."
+
+msgctxt "#32022"
+msgid "Upload successful."
+msgstr "Upload successful."
+
+msgctxt "#32023"
+msgid "The original Kodi logging settings have been restored."
+msgstr "The original Kodi logging settings have been restored."
+
+msgctxt "#32024"
+msgid "Diagnostic package uploaded."
+msgstr "Diagnostic package uploaded."
+
+msgctxt "#32025"
+msgid "The original Kodi logging settings have been restored."
+msgstr "The original Kodi logging settings have been restored."
+
+msgctxt "#32026"
+msgid "There is no active diagnostic session."
+msgstr "There is no active diagnostic session."
+
+msgctxt "#32027"
+msgid "Operation failed: {error}"
+msgstr "Operation failed: {error}"
+
+msgctxt "#32028"
+msgid "kodi.log was not found, is empty or exceeds 2 MB."
+msgstr "kodi.log was not found, is empty or exceeds 2 MB."
+
+msgctxt "#32029"
+msgid "Kodi does not expose the global debug switch."
+msgstr "Kodi does not expose the global debug switch."
+
+msgctxt "#32030"
+msgid "Kodi JSON-RPC error"
+msgstr "Kodi JSON-RPC error"
+
+msgctxt "#32031"
+msgid "GitHub token is missing. Enter it in the add-on settings."
+msgstr "GitHub token is missing. Enter it in the add-on settings."
+
+msgctxt "#32032"
+msgid "Invalid repository name. Expected owner/repository."
+msgstr "Invalid repository name. Expected owner/repository."
+
+msgctxt "#32033"
+msgid "GitHub upload failed (HTTP {status}): {detail}"
+msgstr "GitHub upload failed (HTTP {status}): {detail}"

@@ -1,44 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings version="1">
   <section id="script.kodi.loguploader.github">
-    <category id="general" label="30000">
-      <group id="github" label="30001">
-        <setting id="upload_target" type="string" label="30002">
+    <category id="general" label="32000">
+      <group id="github" label="32001">
+        <setting id="upload_target" type="string" label="32002">
           <default>github</default>
           <constraints>
             <options>
-              <option label="30003">github</option>
-              <option label="30004">paste</option>
+              <option label="32003">github</option>
+              <option label="32004">paste</option>
             </options>
           </constraints>
           <control type="list" format="string">
-            <heading>30002</heading>
+            <heading>32002</heading>
           </control>
         </setting>
-        <setting id="github_repo" type="string" label="30005">
+        <setting id="github_repo" type="string" label="32005">
           <default>Bender2403/kodi-rakuten-tv-addon</default>
           <control type="edit" format="string">
-            <heading>30005</heading>
+            <heading>32005</heading>
           </control>
         </setting>
-        <setting id="github_branch" type="string" label="30006">
+        <setting id="github_branch" type="string" label="32006">
           <default>kodi-logs</default>
           <control type="edit" format="string">
-            <heading>30006</heading>
+            <heading>32006</heading>
           </control>
         </setting>
       </group>
     </category>
-    <category id="expert" label="30008">
-      <group id="authentication" label="30010">
-        <setting id="github_token" type="string" label="30007">
+    <category id="expert" label="32008">
+      <group id="authentication" label="32010">
+        <setting id="github_token" type="string" label="32007">
           <level>3</level>
           <default/>
           <constraints>
             <allowempty>true</allowempty>
           </constraints>
           <control type="edit" format="string">
-            <heading>30007</heading>
+            <heading>32007</heading>
             <hidden>true</hidden>
           </control>
         </setting>

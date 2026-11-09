@@ -1,6 +1,13 @@
 Kodi Logfile Uploader (GitHub)
 ==============================
 
+Version 0.0.3
+-------------
+- Menüeinträge, Diagnosehinweise und Fehlermeldungen über Kodi-Sprachdateien lokalisiert.
+- String-IDs in den für Kodi-Script-Add-ons reservierten Bereich 32000–32999 verschoben.
+- Englische Add-on-Metadaten ergänzt.
+- settings.xml gegen den Python-Code geprüft; keine zusätzlichen Diagnose-Einstellungen erforderlich.
+
 Version 0.0.2
 -------------
 - Kodi-weiten Debug-Modus über Kodi JSON-RPC ergänzt.
