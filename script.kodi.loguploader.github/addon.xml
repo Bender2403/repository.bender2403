@@ -7,7 +7,7 @@
   <extension point="xbmc.python.script" library="default.py"><provides>executable</provides></extension>
   <extension point="xbmc.addon.metadata">
     <summary lang="de_DE">Lädt Kodi-Logs zu GitHub oder paste.kodi.tv und Diagnosepakete zu GitHub hoch.</summary>
-    <description lang="de_DE">Kodi Logfile Uploader mit normalem Log-Upload, Kodi-weitem Debug-Modus und Diagnosepaket mit bereinigten Logs und vorhandenen HLS-/DASH-Manifesten.</description>
+    <description lang="de_DE">Kodi Logfile Uploader mit normalem Log-Upload, Kodi-weitem Debug-Modus und Diagnosepaket mit bereinigten und gefilterten Logs, bevorzugten Add-on-Meldungen sowie vorhandenen HLS-/DASH-Manifesten.</description>
     <summary lang="en_GB">Upload Kodi logs to GitHub or paste.kodi.tv and diagnostic packages to GitHub.</summary>
     <description lang="en_GB">Kodi logfile uploader with normal log upload, Kodi-wide debug mode and diagnostic packages containing sanitized logs and available HLS/DASH manifests.</description>
     <platform>all</platform>

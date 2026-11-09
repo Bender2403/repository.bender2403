@@ -3,6 +3,10 @@ Kodi Logfile Uploader (GitHub)
 
 Version 0.0.3
 -------------
+- Installierte Kodi-Add-ons beim Start erkennen und eine dauerhaft gespeicherte Auswahl für bevorzugte Logeinträge anbieten.
+- Große Kodi-Logs bis 10 MiB einlesen; bereinigte Originale nur innerhalb des bisherigen 2-MiB-Limits beilegen und größere normale Log-Uploads ebenfalls filtern.
+- Gefilterte Logauszüge mit Fehlern, Warnungen, Tracebacks, ausgewählten Add-on-Meldungen und Kontext erzeugen; identische Wiederholungen zusammenfassen.
+- Filterstatistik und ausgewählte Add-ons im Paketbericht dokumentieren.
 - Maximale Größe für Diagnosepakete von 5 MiB auf 20 MiB erhöht.
 - Diagnose-ZIP direkt als temporäre Datei auf Datenträger erstellen statt das gesamte Archiv im Arbeitsspeicher aufzubauen.
 - ZIP64 aktivieren und Diagnosepaket-Größe vor dem Upload prüfen.

@@ -114,7 +114,7 @@ msgid "Operation failed: {error}"
 msgstr "Operation failed: {error}"
 
 msgctxt "#32028"
-msgid "kodi.log was not found, is empty or exceeds 2 MB."
+msgid "kodi.log was not found, is empty or exceeds 10 MB."
 msgstr "kodi.log was not found, is empty or exceeds 2 MB."
 
 msgctxt "#32029"
@@ -132,6 +132,23 @@ msgstr "GitHub token is missing. Enter it in the add-on settings."
 msgctxt "#32032"
 msgid "Invalid repository name. Expected owner/repository."
 msgstr "Invalid repository name. Expected owner/repository."
+
+
+msgctxt "#32034"
+msgid "Select add-ons to prioritize in logs"
+msgstr "Select add-ons to prioritize in logs"
+
+msgctxt "#32035"
+msgid "Select installed add-ons whose log messages are important."
+msgstr "Select installed add-ons whose log messages are important."
+
+msgctxt "#32036"
+msgid "Selection saved. {count} add-ons will be prioritized in diagnostic logs."
+msgstr "Selection saved. {count} add-ons will be prioritized in diagnostic logs."
+
+msgctxt "#32037"
+msgid "Kodi did not return any installed add-ons."
+msgstr "Kodi did not return any installed add-ons."
 
 msgctxt "#32033"
 msgid "GitHub upload failed (HTTP {status}): {detail}"

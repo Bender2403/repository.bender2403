@@ -14,6 +14,8 @@ import xbmcaddon
 import xbmcgui
 import xbmcvfs
 
+from . import logfilter
+
 ADDON = xbmcaddon.Addon()
 ADDON_ID = ADDON.getAddonInfo('id')
 
@@ -29,10 +31,13 @@ LOG_FILE = os.path.join(LOG_DIR, 'kodi.log')
 TEMP_DIR = xbmcvfs.translatePath('special://temp')
 PROFILE_DIR = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
 STATE_FILE = os.path.join(PROFILE_DIR, 'diagnostic_state.json')
+ADDON_SELECTION_FILE = os.path.join(PROFILE_DIR, 'selected_addons.json')
 PASTE_URL = 'https://paste.kodi.tv/'
 API_ROOT = 'https://api.github.com'
 TIMEOUT = 30
 MAX_LOG_SIZE = 2 * 1024 * 1024
+MAX_LOG_SOURCE_SIZE = 10 * 1024 * 1024
+MAX_FILTERED_LOG_SIZE = 2 * 1024 * 1024
 MAX_MANIFEST_SIZE = 1024 * 1024
 MAX_PACKAGE_SIZE = 20 * 1024 * 1024
 MAX_MANIFESTS = 8
@@ -82,10 +87,21 @@ def _read_vfs_file(path, limit):
 
 
 def _read_log():
-    content = _read_vfs_file(LOG_FILE, MAX_LOG_SIZE)
+    content = _read_vfs_file(LOG_FILE, MAX_LOG_SOURCE_SIZE)
     if not content:
-        raise RuntimeError(_s(32028, 'kodi.log was not found, is empty or exceeds 2 MB.'))
-    return _clean_log(content)
+        raise RuntimeError(_s(32028, 'kodi.log was not found, is empty or exceeds 10 MB.'))
+    sanitized = _clean_log(content)
+    if len(sanitized.encode('utf-8')) <= MAX_LOG_SIZE:
+        return sanitized
+    filtered, stats = logfilter.filter_log(
+        sanitized, _selected_addon_tokens(), MAX_FILTERED_LOG_SIZE
+    )
+    _log(
+        'Großes Kodi-Log gefiltert: %d/%d Zeilen, %d Add-on-Treffer, %d Bytes' %
+        (stats['kept_lines'], stats['total_lines'],
+         stats['matched_addon_lines'], stats['output_bytes'])
+    )
+    return filtered
 
 
 def _jsonrpc(method, params=None):
@@ -139,6 +155,97 @@ def _delete_state():
         xbmcvfs.delete(STATE_FILE)
 
 
+def _get_installed_addons():
+    """Return all installed Kodi add-ons, including disabled add-ons."""
+    result = _jsonrpc('Addons.GetAddons', {
+        'type': 'unknown',
+        'enabled': 'all',
+        'installed': True,
+        'properties': ['name', 'enabled', 'installed', 'type'],
+        'limits': {'start': 0, 'end': 500},
+    })
+    addons = result.get('addons', []) if isinstance(result, dict) else []
+    cleaned = []
+    for addon in addons:
+        addon_id = addon.get('addonid')
+        if not addon_id or addon_id == ADDON_ID:
+            continue
+        cleaned.append({
+            'addonid': str(addon_id),
+            'name': str(addon.get('name') or addon_id),
+            'type': str(addon.get('type') or 'unknown'),
+            'enabled': bool(addon.get('enabled', False)),
+        })
+    return sorted(cleaned, key=lambda item: (item['name'].lower(), item['addonid']))
+
+
+def _load_addon_selection():
+    if not xbmcvfs.exists(ADDON_SELECTION_FILE):
+        return []
+    try:
+        handle = xbmcvfs.File(ADDON_SELECTION_FILE)
+        try:
+            state = json.loads(_decode(handle.read()))
+        finally:
+            handle.close()
+        addons = state.get('addons', []) if isinstance(state, dict) else []
+        return [item for item in addons if isinstance(item, dict) and item.get('addonid')]
+    except Exception as exc:
+        _log('Add-on-Auswahl konnte nicht gelesen werden: %s' % exc, xbmc.LOGWARNING)
+        return []
+
+
+def _save_addon_selection(addons):
+    if not xbmcvfs.exists(PROFILE_DIR):
+        xbmcvfs.mkdirs(PROFILE_DIR)
+    handle = xbmcvfs.File(ADDON_SELECTION_FILE, 'w')
+    try:
+        handle.write(json.dumps({'addons': addons}, ensure_ascii=False))
+    finally:
+        handle.close()
+
+
+def _select_relevant_addons(dialog, installed=None):
+    """Let the user select installed add-ons whose log lines get priority."""
+    if installed is None:
+        installed = _get_installed_addons()
+    if not installed:
+        dialog.ok(ADDON_NAME, _s(32037, 'Kodi did not return any installed add-ons.'))
+        return False
+
+    previous = set(item.get('addonid') for item in _load_addon_selection())
+    options = ['%s  [%s]' % (item['name'], item['addonid']) for item in installed]
+    preselected = [
+        index for index, item in enumerate(installed)
+        if item['addonid'] in previous
+    ]
+    selected_indices = dialog.multiselect(
+        _s(32035, 'Select installed add-ons whose log messages are important.'),
+        options,
+        preselect=preselected,
+    )
+    if selected_indices is None:
+        return False
+
+    selected = [installed[index] for index in selected_indices
+                if 0 <= index < len(installed)]
+    _save_addon_selection(selected)
+    dialog.ok(
+        ADDON_NAME,
+        _s(32036, 'Selection saved. {count} add-ons will be prioritized in diagnostic logs.').format(
+            count=len(selected)
+        ),
+    )
+    return True
+
+
+def _selected_addon_tokens():
+    tokens = []
+    for addon in _load_addon_selection():
+        tokens.extend((addon.get('addonid', ''), addon.get('name', '')))
+    return [token for token in tokens if token]
+
+
 def _start_diagnostics(dialog):
     if not dialog.yesno(_s(32015, 'Kodi Logfile Uploader'), _s(32016, 'Enable Kodi-wide debug logging?') + '\n\n' + _s(32017, 'During diagnostics, more technical details and stream addresses may appear in the local Kodi log. Known credentials and URL parameters are sanitized before upload.')):
         return
@@ -182,13 +289,44 @@ def _collect_logs(zf, report):
             candidates.append(name)
     if 'kodi.log' not in candidates:
         candidates.append('kodi.log')
+
+    addon_tokens = _selected_addon_tokens()
+    selected = _load_addon_selection()
+    if selected:
+        report.append('Bevorzugte Add-ons: ' + ', '.join(
+            item.get('addonid', '') for item in selected
+        ))
+
     for name in sorted(set(candidates))[:6]:
         path = os.path.join(LOG_DIR, name)
         try:
-            content = _read_vfs_file(path, MAX_LOG_SIZE)
-            if content:
-                _add_text(zf, 'logs/' + name, content)
-                report.append('Log aufgenommen: ' + name)
+            content = _read_vfs_file(path, MAX_LOG_SOURCE_SIZE)
+            if not content:
+                report.append('Log ausgelassen oder leer/zu groß: ' + name)
+                continue
+
+            sanitized = _clean_log(content)
+            source_bytes = sanitized.encode('utf-8')
+            if len(source_bytes) <= MAX_LOG_SIZE:
+                zf.writestr('logs/' + name, source_bytes)
+                report.append('Log aufgenommen: %s (bereinigtes Original)' % name)
+            else:
+                report.append(
+                    'Log aufgenommen: %s (Original mit %d Bytes wegen Größenlimit nicht beigelegt)' %
+                    (name, len(source_bytes))
+                )
+
+            filtered, stats = logfilter.filter_log(
+                sanitized, addon_tokens, MAX_FILTERED_LOG_SIZE
+            )
+            if filtered:
+                filtered_name = 'filtered-' + name
+                zf.writestr('logs/' + filtered_name, filtered.encode('utf-8'))
+                report.append(
+                    'Log aufgenommen: %s; %d/%d Zeilen behalten, %d Add-on-Treffer, %d Bytes' %
+                    (filtered_name, stats['kept_lines'], stats['total_lines'],
+                     stats['matched_addon_lines'], stats['output_bytes'])
+                )
         except Exception as exc:
             report.append('Log ausgelassen: %s (%s)' % (name, exc))
 
@@ -423,8 +561,18 @@ def main():
         _s(32012, 'Start diagnostics (Kodi-wide debug logging)'),
         _s(32013, 'Create and upload diagnostic package'),
         _s(32014, 'Restore debug settings'),
+        _s(32034, 'Select add-ons to prioritize in logs'),
     ]
     try:
+        # Refresh the installed add-on list at every launch and let the user
+        # confirm or change which add-ons receive priority in the log filter.
+        try:
+            installed_addons = _get_installed_addons()
+            _select_relevant_addons(dialog, installed_addons)
+        except Exception as scan_error:
+            _log('Installierte Add-ons konnten nicht gelesen werden: %s' % scan_error,
+                 xbmc.LOGWARNING)
+
         choice = dialog.select(ADDON_NAME, choices)
         if choice < 0:
             return
@@ -442,6 +590,9 @@ def main():
         elif choice == 3:
             restored = _restore_diagnostics()
             dialog.ok(ADDON_NAME, _s(32025, 'The original Kodi logging settings have been restored.') if restored else _s(32026, 'There is no active diagnostic session.'))
+        elif choice == 4:
+            _select_relevant_addons(dialog)
     except Exception as exc:
         _log('Vorgang fehlgeschlagen: %s' % exc, xbmc.LOGERROR)
         dialog.ok(ADDON_NAME, _s(32027, 'Operation failed: {error}').format(error=str(exc)))
+
