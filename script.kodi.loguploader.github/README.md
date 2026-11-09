@@ -4,7 +4,7 @@ Diese eigenständige Version basiert auf Ronies Add-on `script.kodi.loguploader`
 
 **Anzeigename:** Kodi Logfile Uploader (GitHub)  
 **Add-on-ID:** `script.kodi.loguploader.github`  
-**Version:** `1.1.1`  
+**Version:** `0.0.4`  
 
 **GitHub ist das voreingestellte Upload-Ziel.** Der bisherige Dienst `paste.kodi.tv` bleibt als alternative Upload-Möglichkeit erhalten.
 
@@ -23,7 +23,13 @@ Diese eigenständige Version basiert auf Ronies Add-on `script.kodi.loguploader`
 
 ## So funktioniert der Upload
 
-Das Add-on liest die aktuelle Datei `kodi.log`, entfernt einige erkannte Zugangsdaten und lädt sie anschließend in den Ordner `logs/` des GitHub-Repositories hoch.
+Beim Start erkennt das Add-on die installierten Kodi-Add-ons und zeigt eine Auswahlliste. Du kannst festlegen, für welche Add-ons Logmeldungen bei der Diagnose bevorzugt werden. Die Auswahl wird gespeichert und kann bei jedem Start geändert werden.
+
+Große Logs bis 10 MiB werden eingelesen. Fehler, Warnungen, Tracebacks, Meldungen der ausgewählten Add-ons und der jeweilige Kontext werden bevorzugt. Wiederholte identische Meldungen werden zusammengefasst. Bereinigte Originale werden zusätzlich beigelegt, sofern sie höchstens 2 MiB groß sind.
+
+Unter den Add-on-Einstellungen lässt sich außerdem die **eigene Debug-Protokollierung** ein- und ausschalten. Sie ist unabhängig vom globalen Kodi-Debug-Modus und verändert dessen Einstellung nicht.
+
+Bekannte Zugangsdaten und sensible URL-Parameter werden vor dem Upload bereinigt. Das Add-on verändert die lokale Original-Logdatei nicht.
 
 Jede Logdatei erhält einen Zeitstempel in UTC als Dateinamen, zum Beispiel:
 

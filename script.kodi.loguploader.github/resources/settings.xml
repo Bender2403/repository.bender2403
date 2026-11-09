@@ -28,6 +28,12 @@
           </control>
         </setting>
       </group>
+      <group id="diagnostics" label="32038">
+        <setting id="debug_logging" type="boolean" label="32039">
+          <default>false</default>
+          <control type="toggle"/>
+        </setting>
+      </group>
     </category>
     <category id="expert" label="32008">
       <group id="authentication" label="32010">

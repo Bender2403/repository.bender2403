@@ -1,6 +1,15 @@
 Kodi Logfile Uploader (GitHub)
 ==============================
 
+Version 0.0.4
+-------------
+- Eigene Debug-Protokollierung ergänzt, unabhängig vom globalen Kodi-Debug-Modus und über die Add-on-Einstellungen ein- und ausschaltbar.
+- Installierte Add-ons werden beim Start erkannt; die Auswahl der für die Diagnose wichtigen Add-ons kann gespeichert und jederzeit geändert werden.
+- Logfilter bevorzugt Fehler, Warnungen, Tracebacks, Kontext und Meldungen ausgewählter Add-ons.
+- Große Logs bis 10 MiB werden eingelesen und in begrenzte, gefilterte Auszüge umgewandelt; Originale werden nur innerhalb des 2-MiB-Limits beigelegt.
+- Wiederholte identische Meldungen werden zusammengefasst; Filterstatistiken werden im Diagnosebericht dokumentiert.
+- Begrenzte Ausgabebudgets für aktuelle und ältere Logdateien schützen das 20-MiB-Diagnosepaket-Limit.
+
 Version 0.0.3
 -------------
 - Installierte Kodi-Add-ons beim Start erkennen und eine dauerhaft gespeicherte Auswahl für bevorzugte Logeinträge anbieten.

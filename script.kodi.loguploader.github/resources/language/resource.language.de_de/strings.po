@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Kodi Logfile Uploader (GitHub) 0.0.3\n"
+"Project-Id-Version: Kodi Logfile Uploader (GitHub) 0.0.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-09 00:00+0000\n"
 "PO-Revision-Date: 2026-11-09 00:00+0000\n"
@@ -115,7 +115,7 @@ msgstr "Vorgang fehlgeschlagen: {error}"
 
 msgctxt "#32028"
 msgid "kodi.log was not found, is empty or exceeds 10 MB."
-msgstr "kodi.log wurde nicht gefunden, ist leer oder größer als 2 MB."
+msgstr "kodi.log wurde nicht gefunden, ist leer oder größer als 10 MB."
 
 msgctxt "#32029"
 msgid "Kodi does not expose the global debug switch."
@@ -149,6 +149,14 @@ msgstr "Auswahl gespeichert. {count} Add-ons werden in Diagnoselogs bevorzugt."
 msgctxt "#32037"
 msgid "Kodi did not return any installed add-ons."
 msgstr "Kodi hat keine installierten Add-ons zurückgegeben."
+
+msgctxt "#32038"
+msgid "Add-on diagnostics"
+msgstr "Add-on-Diagnose"
+
+msgctxt "#32039"
+msgid "Enable this add-on's debug logging"
+msgstr "Debug-Protokollierung dieses Add-ons aktivieren"
 
 msgctxt "#32033"
 msgid "GitHub upload failed (HTTP {status}): {detail}"

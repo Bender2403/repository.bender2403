@@ -37,7 +37,8 @@ API_ROOT = 'https://api.github.com'
 TIMEOUT = 30
 MAX_LOG_SIZE = 2 * 1024 * 1024
 MAX_LOG_SOURCE_SIZE = 10 * 1024 * 1024
-MAX_FILTERED_LOG_SIZE = 2 * 1024 * 1024
+MAX_FILTERED_LOG_SIZE = 1536 * 1024
+MAX_OLD_FILTERED_LOG_SIZE = 256 * 1024
 MAX_MANIFEST_SIZE = 1024 * 1024
 MAX_PACKAGE_SIZE = 20 * 1024 * 1024
 MAX_MANIFESTS = 8
@@ -55,6 +56,18 @@ REDACTIONS = [
 
 def _log(message, level=xbmc.LOGINFO):
     xbmc.log('%s: %s' % (ADDON_ID, message), level)
+
+
+def _debug(message):
+    """Write add-on diagnostics only when its independent setting is enabled."""
+    try:
+        enabled = ADDON.getSetting('debug_logging').strip().lower() == 'true'
+    except Exception:
+        enabled = False
+    if enabled:
+        # LOGINFO keeps this add-on's debug output visible without enabling
+        # Kodi-wide debug logging. The setting controls only this add-on.
+        xbmc.log('%s [DEBUG]: %s' % (ADDON_ID, message), xbmc.LOGINFO)
 
 
 def _clean_log(content):
@@ -96,6 +109,9 @@ def _read_log():
     filtered, stats = logfilter.filter_log(
         sanitized, _selected_addon_tokens(), MAX_FILTERED_LOG_SIZE
     )
+    _debug('Großes Kodi-Log gefiltert: %d/%d Zeilen, %d Add-on-Treffer, %d Bytes.' %
+        (stats['kept_lines'], stats['total_lines'],
+         stats['matched_addon_lines'], stats['output_bytes']))
     _log(
         'Großes Kodi-Log gefiltert: %d/%d Zeilen, %d Add-on-Treffer, %d Bytes' %
         (stats['kept_lines'], stats['total_lines'],
@@ -176,7 +192,9 @@ def _get_installed_addons():
             'type': str(addon.get('type') or 'unknown'),
             'enabled': bool(addon.get('enabled', False)),
         })
-    return sorted(cleaned, key=lambda item: (item['name'].lower(), item['addonid']))
+    cleaned = sorted(cleaned, key=lambda item: (item['name'].lower(), item['addonid']))
+    _debug('Kodi meldet %d installierte Add-ons.' % len(cleaned))
+    return cleaned
 
 
 def _load_addon_selection():
@@ -230,6 +248,7 @@ def _select_relevant_addons(dialog, installed=None):
     selected = [installed[index] for index in selected_indices
                 if 0 <= index < len(installed)]
     _save_addon_selection(selected)
+    _debug('Add-on-Auswahl gespeichert: %d Add-ons.' % len(selected))
     dialog.ok(
         ADDON_NAME,
         _s(32036, 'Selection saved. {count} add-ons will be prioritized in diagnostic logs.').format(
@@ -292,6 +311,7 @@ def _collect_logs(zf, report):
 
     addon_tokens = _selected_addon_tokens()
     selected = _load_addon_selection()
+    _debug('Diagnosepaket: %d Add-ons für bevorzugte Logeinträge ausgewählt.' % len(selected))
     if selected:
         report.append('Bevorzugte Add-ons: ' + ', '.join(
             item.get('addonid', '') for item in selected
@@ -316,9 +336,14 @@ def _collect_logs(zf, report):
                     (name, len(source_bytes))
                 )
 
+            filter_limit = (MAX_FILTERED_LOG_SIZE if name.lower() == 'kodi.log'
+                            else MAX_OLD_FILTERED_LOG_SIZE)
             filtered, stats = logfilter.filter_log(
-                sanitized, addon_tokens, MAX_FILTERED_LOG_SIZE
+                sanitized, addon_tokens, filter_limit
             )
+            _debug('%s: %d/%d Zeilen behalten; %d Add-on-Treffer; %d Bytes.' %
+                   (name, stats['kept_lines'], stats['total_lines'],
+                    stats['matched_addon_lines'], stats['output_bytes']))
             if filtered:
                 filtered_name = 'filtered-' + name
                 zf.writestr('logs/' + filtered_name, filtered.encode('utf-8'))
@@ -438,6 +463,7 @@ def _build_diagnostic_package():
             _add_text(archive, 'package-report.txt', '\n'.join(report))
 
         package_size = os.path.getsize(package_path)
+        _debug('Diagnosepaket erstellt: %d Bytes.' % package_size)
         if package_size > MAX_PACKAGE_SIZE:
             raise RuntimeError('Diagnosepaket überschreitet das Upload-Limit von 20 MB.')
         if not any(item.startswith('Log aufgenommen:') for item in report):
@@ -564,6 +590,7 @@ def main():
         _s(32034, 'Select add-ons to prioritize in logs'),
     ]
     try:
+        _debug('Uploader gestartet; Add-on-Version %s.' % ADDON_VERSION)
         # Refresh the installed add-on list at every launch and let the user
         # confirm or change which add-ons receive priority in the log filter.
         try:
