@@ -1,6 +1,10 @@
 Kodi Logfile Uploader (GitHub)
 ==============================
 
+Version 0.0.7
+-------------
+- Add-on-Auswahlliste zeigt nur noch aktivierte Add-ons; deaktivierte Add-ons werden bereits durch Kodi JSON-RPC herausgefiltert und zusätzlich im Add-on-Code ausgeschlossen.
+
 Version 0.0.6
 -------------
 - Startverhalten korrigiert: Beim Öffnen erscheint direkt das Hauptmenü; die Add-on-Auswahl wird nur noch über den entsprechenden Menüpunkt geöffnet.

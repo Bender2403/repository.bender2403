@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<addon id="script.kodi.loguploader.github" name="Kodi Logfile Uploader (GitHub)" version="0.0.6" provider-name="Meemann">
+<addon id="script.kodi.loguploader.github" name="Kodi Logfile Uploader (GitHub)" version="0.0.7" provider-name="Meemann">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="script.module.requests" version="2.22.0+matrix.1"/>

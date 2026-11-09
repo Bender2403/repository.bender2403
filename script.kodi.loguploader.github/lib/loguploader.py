@@ -172,10 +172,10 @@ def _delete_state():
 
 
 def _get_installed_addons():
-    """Return all installed Kodi add-ons, including disabled add-ons."""
+    """Return installed and enabled Kodi add-ons only."""
     result = _jsonrpc('Addons.GetAddons', {
         'type': 'unknown',
-        'enabled': 'all',
+        'enabled': True,
         'installed': True,
         'properties': ['name', 'enabled', 'installed'],
         'limits': {'start': 0, 'end': 500},
@@ -185,6 +185,9 @@ def _get_installed_addons():
     for addon in addons:
         addon_id = addon.get('addonid')
         if not addon_id or addon_id == ADDON_ID:
+            continue
+        # Keep only enabled add-ons, even if Kodi returns an unexpected entry.
+        if not addon.get('enabled', False):
             continue
         cleaned.append({
             'addonid': str(addon_id),
