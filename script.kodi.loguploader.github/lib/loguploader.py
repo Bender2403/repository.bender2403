@@ -2,7 +2,7 @@
 """Kodi Logfile Uploader with optional Kodi-wide diagnostics."""
 import base64
 import datetime
-import io
+import tempfile
 import json
 import os
 import re
@@ -281,23 +281,39 @@ def _system_report():
 
 
 def _build_diagnostic_package():
-    output = io.BytesIO()
+    """Build the ZIP on disk so the complete archive is not held in RAM."""
     report = []
-    with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as archive:
-        _collect_logs(archive, report)
-        _collect_manifests(archive, report)
-        _collect_license_diagnostics(archive, report)
-        _add_text(archive, 'system-info.txt', _system_report())
-        _add_text(archive, 'package-report.txt', '\n'.join(report))
-    data = output.getvalue()
-    if len(data) > MAX_PACKAGE_SIZE:
-        raise RuntimeError('Diagnosepaket überschreitet das Upload-Limit von 5 MB.')
-    if not any(item.startswith('Log aufgenommen:') for item in report):
-        raise RuntimeError('Es konnten keine Kodi-Logdateien in das Diagnosepaket aufgenommen werden.')
-    return data
+    if not os.path.isdir(TEMP_DIR):
+        os.makedirs(TEMP_DIR)
+    file_descriptor, package_path = tempfile.mkstemp(
+        prefix='kodi-diagnostics-', suffix='.zip', dir=TEMP_DIR
+    )
+    os.close(file_descriptor)
+    try:
+        with zipfile.ZipFile(
+            package_path, 'w', zipfile.ZIP_DEFLATED, allowZip64=True
+        ) as archive:
+            _collect_logs(archive, report)
+            _collect_manifests(archive, report)
+            _collect_license_diagnostics(archive, report)
+            _add_text(archive, 'system-info.txt', _system_report())
+            _add_text(archive, 'package-report.txt', '\n'.join(report))
+
+        package_size = os.path.getsize(package_path)
+        if package_size > MAX_PACKAGE_SIZE:
+            raise RuntimeError('Diagnosepaket überschreitet das Upload-Limit von 5 MB.')
+        if not any(item.startswith('Log aufgenommen:') for item in report):
+            raise RuntimeError('Es konnten keine Kodi-Logdateien in das Diagnosepaket aufgenommen werden.')
+        return package_path
+    except Exception:
+        try:
+            os.remove(package_path)
+        except OSError:
+            pass
+        raise
 
 
-def _github_upload_bytes(data, filename, folder='logs'):
+def _github_upload_base64(encoded_content, filename, folder='logs'):
     token = ADDON.getSetting('github_token').strip()
     repo = ADDON.getSetting('github_repo').strip() or 'Bender2403/kodi-rakuten-tv-addon'
     branch = ADDON.getSetting('github_branch').strip() or 'kodi-logs'
@@ -310,7 +326,7 @@ def _github_upload_bytes(data, filename, folder='logs'):
     payload = {
         'message': 'Upload Kodi diagnostic %s' % filename,
         'branch': branch,
-        'content': base64.b64encode(data).decode('ascii'),
+        'content': encoded_content,
     }
     headers = {
         'Authorization': 'Bearer ' + token,
@@ -326,6 +342,39 @@ def _github_upload_bytes(data, filename, folder='logs'):
             detail = ''
         raise RuntimeError(_s(32033, 'GitHub upload failed (HTTP {status}): {detail}').format(status=response.status_code, detail=detail or response.text[:300]))
     return 'https://github.com/%s/blob/%s/%s' % (repo, branch, path)
+
+
+def _github_upload_bytes(data, filename, folder='logs'):
+    encoded_content = base64.b64encode(data).decode('ascii')
+    return _github_upload_base64(encoded_content, filename, folder)
+
+
+def _github_upload_file(file_path, filename, folder='logs'):
+    """Base64-encode a local file incrementally before the Contents API upload."""
+    file_size = os.path.getsize(file_path)
+    if file_size <= 0 or file_size > MAX_PACKAGE_SIZE:
+        raise RuntimeError('Diagnosepaket fehlt oder überschreitet das Upload-Limit von 5 MB.')
+
+    file_descriptor, encoded_path = tempfile.mkstemp(
+        prefix='kodi-upload-', suffix='.b64', dir=TEMP_DIR
+    )
+    try:
+        with os.fdopen(file_descriptor, 'wb') as encoded_file:
+            with open(file_path, 'rb') as source_file:
+                while True:
+                    chunk = source_file.read(48 * 1024)
+                    if not chunk:
+                        break
+                    encoded_file.write(base64.b64encode(chunk))
+
+        with open(encoded_path, 'r', encoding='ascii') as encoded_file:
+            encoded_content = encoded_file.read()
+        return _github_upload_base64(encoded_content, filename, folder)
+    finally:
+        try:
+            os.remove(encoded_path)
+        except OSError:
+            pass
 
 
 def _github_upload_log(content):
@@ -353,9 +402,17 @@ def _upload_normal_log():
 def _upload_diagnostic_package():
     # Restore the original Kodi logging state before collecting and uploading.
     restored = _restore_diagnostics()
-    package = _build_diagnostic_package()
+    package_path = _build_diagnostic_package()
     stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
-    destination = _github_upload_bytes(package, 'diagnosepaket-%s.zip' % stamp)
+    try:
+        destination = _github_upload_file(
+            package_path, 'diagnosepaket-%s.zip' % stamp
+        )
+    finally:
+        try:
+            os.remove(package_path)
+        except OSError:
+            pass
     return destination, restored
 
 

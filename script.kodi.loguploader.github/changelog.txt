@@ -3,6 +3,9 @@ Kodi Logfile Uploader (GitHub)
 
 Version 0.0.3
 -------------
+- Diagnose-ZIP direkt als temporäre Datei auf Datenträger erstellen statt das gesamte Archiv im Arbeitsspeicher aufzubauen.
+- ZIP64 aktivieren und Diagnosepaket-Größe vor dem Upload prüfen.
+- ZIP-Datei beim GitHub-Upload blockweise Base64-kodieren und temporäre Dateien auch bei Fehlern entfernen.
 - Systeminformationen über Python-Laufzeitdaten und Android-Systemeigenschaften ermitteln statt nicht passende Text-Info-Labels zu verwenden.
 - Android-/Fire-TV-Gerät, Android-Version, Architektur und verfügbare CPU-Informationen auslesen; nicht ermittelbare Werte als „Unbekannt“ kennzeichnen.
 - Diagnosepaket-Systembericht um Gerät und Plattform ergänzen.
