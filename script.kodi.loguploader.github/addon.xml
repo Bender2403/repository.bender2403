@@ -8,8 +8,8 @@
   <extension point="xbmc.addon.metadata">
     <summary lang="de_DE">Lädt Kodi-Logs zu GitHub oder paste.kodi.tv und Diagnosepakete zu GitHub hoch.</summary>
     <description lang="de_DE">Kodi Logfile Uploader mit normalem Log-Upload, Kodi-weitem Debug-Modus und Diagnosepaket mit bereinigten und gefilterten Logs, bevorzugten Add-on-Meldungen sowie vorhandenen HLS-/DASH-Manifesten.</description>
-    <summary lang="en_GB">Upload Kodi logs to GitHub or paste.kodi.tv and diagnostic packages to GitHub.</summary>
-    <description lang="en_GB">Kodi logfile uploader with normal log upload, Kodi-wide debug mode and diagnostic packages containing sanitized logs and available HLS/DASH manifests.</description>
+    <summary lang="en_GB">Upload sanitized and filtered Kodi logs to GitHub or paste.kodi.tv and diagnostic packages to GitHub.</summary>
+    <description lang="en_GB">Kodi logfile uploader with normal log upload, Kodi-wide debug mode, installed add-on selection and diagnostic packages containing sanitized originals when small enough, filtered log excerpts and available HLS/DASH manifests.</description>
     <platform>all</platform>
     <license>GPL-2.0-only</license>
     <source>https://gitlab.com/ronie/script.kodi.loguploader/</source>
