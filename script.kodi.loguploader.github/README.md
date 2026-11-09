@@ -4,7 +4,7 @@ Diese eigenständige Version basiert auf Ronies Add-on `script.kodi.loguploader`
 
 **Anzeigename:** Kodi Logfile Uploader (GitHub)  
 **Add-on-ID:** `script.kodi.loguploader.github`  
-**Version:** `0.0.4`  
+**Version:** `0.0.5`  
 
 **GitHub ist das voreingestellte Upload-Ziel.** Der bisherige Dienst `paste.kodi.tv` bleibt als alternative Upload-Möglichkeit erhalten.
 

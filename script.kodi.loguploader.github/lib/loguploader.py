@@ -177,7 +177,7 @@ def _get_installed_addons():
         'type': 'unknown',
         'enabled': 'all',
         'installed': True,
-        'properties': ['name', 'enabled', 'installed', 'type'],
+        'properties': ['name', 'enabled', 'installed'],
         'limits': {'start': 0, 'end': 500},
     })
     addons = result.get('addons', []) if isinstance(result, dict) else []
