@@ -1,0 +1,15 @@
+Kodi Logfile Uploader (GitHub)
+==============================
+
+Version 0.0.2
+-------------
+- Kodi-weiten Debug-Modus über Kodi JSON-RPC ergänzt.
+- Ursprünglichen Debug-Status sichern und nach der Diagnose wiederherstellen.
+- Diagnosepaket als ZIP mit aktuellen/älteren Kodi-Logs, vorhandenen HLS-/DASH-Manifesten und Systeminformationen ergänzt.
+- Bekannte Zugangsdaten und URL-Parameter vor dem Upload bereinigen.
+- Diagnosepakete werden im GitHub-Repository unter logs/ gespeichert.
+- Separate Add-on-Debug-Einstellungen werden nicht verändert.
+
+Version 0.0.1
+-------------
+- Kodi-Log wahlweise zu GitHub oder paste.kodi.tv hochladen.

@@ -129,15 +129,15 @@
 		</news>
 	</extension>
 </addon>
-<addon id="script.kodi.loguploader.github" name="Kodi Logfile Uploader (GitHub)" version="0.0.1" provider-name="Meemann">
+<addon id="script.kodi.loguploader.github" name="Kodi Logfile Uploader (GitHub)" version="0.0.2" provider-name="Meemann">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.requests" version="2.22.0+matrix.1" />
   </requires>
   <extension point="xbmc.python.script" library="default.py"><provides>executable</provides></extension>
   <extension point="xbmc.addon.metadata">
-    <summary lang="de_DE">Lädt Kodi-Logs zu GitHub oder paste.kodi.tv hoch.</summary>
-    <description lang="de_DE">Modifizierter Kodi Logfile Uploader mit GitHub als Standardziel und paste.kodi.tv als Alternative.</description>
+    <summary lang="de_DE">Lädt Kodi-Logs zu GitHub oder paste.kodi.tv und Diagnosepakete zu GitHub hoch.</summary>
+    <description lang="de_DE">Kodi Logfile Uploader mit normalem Log-Upload, Kodi-weitem Debug-Modus und Diagnosepaket mit bereinigten Logs und vorhandenen HLS-/DASH-Manifesten.</description>
     <platform>all</platform>
     <license>GPL-2.0-only</license>
     <source>https://gitlab.com/ronie/script.kodi.loguploader/</source>
