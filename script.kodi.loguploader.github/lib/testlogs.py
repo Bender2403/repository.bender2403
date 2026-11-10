@@ -3,9 +3,9 @@
 import os
 
 
-def validate_test_log_paths(paths, temp_dir, exists, size, max_size, max_files=6):
-    """Return unique, existing .log files located inside Kodi's temp directory."""
-    root = os.path.realpath(temp_dir)
+def validate_test_log_paths(paths, test_dir, exists, size, max_size, max_files=6):
+    """Return unique, existing .log files located inside the dedicated test directory."""
+    root = os.path.realpath(test_dir)
     valid = []
     seen = set()
     for raw_path in paths or []:
@@ -13,7 +13,7 @@ def validate_test_log_paths(paths, temp_dir, exists, size, max_size, max_files=6
             continue
         path = os.path.realpath(raw_path)
         try:
-            if os.path.commonpath((root, path)) != root:
+            if os.path.commonpath((root, path)) != root or path == root:
                 continue
         except (ValueError, OSError):
             continue

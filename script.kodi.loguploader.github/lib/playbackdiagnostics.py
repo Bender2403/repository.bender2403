@@ -153,7 +153,7 @@ class PlaybackRecorder:
             for current, dirs, names in os.walk(root):
                 depth = os.path.relpath(current, root).count(os.sep)
                 dirs[:] = [d for d in dirs if d.lower() not in (
-                    'cdm', 'license', 'licenses', 'widevine', 'kodi_loguploader'
+                    'cdm', 'license', 'licenses', 'widevine', 'kodi_loguploader', 'kodi_diag'
                 ) and not os.path.islink(os.path.join(current, d))]
                 if depth > 2:
                     dirs[:] = []
@@ -216,8 +216,9 @@ def run():
     addon = xbmcaddon.Addon()
     temp_dir = xbmcvfs.translatePath('special://temp')
     log_dir = xbmcvfs.translatePath('special://logpath')
-    base_dir = os.path.join(temp_dir, 'kodi_loguploader')
-    diagnose_dir = os.path.join(base_dir, 'diagnose')
+    loguploader._ensure_temp_dirs()
+    base_dir = loguploader.DIAGNOSTIC_BASE_DIR
+    diagnose_dir = loguploader.DIAGNOSTIC_PLAYBACK_DIR
     marker_path = os.path.join(base_dir, 'auto_mode_active')
     if not os.path.isdir(base_dir):
         os.makedirs(base_dir)
@@ -281,6 +282,9 @@ def run():
     player = VideoPlayer()
     monitor = xbmc.Monitor()
     previous_enabled = addon.getSetting('auto_diagnostics').lower() == 'true'
+    previous_test_mode = addon.getSetting('test_mode').lower() == 'true'
+    if not previous_test_mode:
+        loguploader._clear_test_logs_if_disabled()
     if previous_enabled:
         with open(marker_path, 'w', encoding='utf-8') as marker:
             marker.write('active')
@@ -306,6 +310,10 @@ def run():
             except OSError:
                 pass
         previous_enabled = enabled
+        test_mode = addon.getSetting('test_mode').lower() == 'true'
+        if previous_test_mode and not test_mode:
+            loguploader._clear_test_logs_if_disabled()
+        previous_test_mode = test_mode
         if monitor.waitForAbort(1):
             break
 

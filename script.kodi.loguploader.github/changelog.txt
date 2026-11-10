@@ -1,6 +1,14 @@
 Kodi Diag
 ==============================
 
+Version 0.1.2
+-------------
+- Temporäre Diagnose-Daten nach special://temp/kodi_diag verschoben; vorhandene Wiedergabe-Diagnosen und ausstehende Diagnosepakete werden bei Bedarf sicher aus dem bisherigen Ordner übernommen.
+- Testlogs werden getrennt unter kodi_diag/test-logs abgelegt, dort ausgewählt und ausschließlich innerhalb dieses Ordners validiert; bei deaktiviertem Testmodus wird nur dieser Testordner gelöscht.
+- Hauptmenü zeigt die Anzahl ausgewählter Test-Logdateien an.
+- Hintergrund-Fortschritt für normale und mehrere Testlog-Uploads sowie für Diagnosepaket-Uploads ergänzt; die Anzeige beschreibt Verarbeitungsphasen und keinen bytegenauen Netzwerkfortschritt.
+- GitHub-Testlogs werden nach 60 Minuten automatisch gelöscht; Push-Trigger und Cleanup-Workflow auf main und kodi-logs angeglichen. Diagnosepakete behalten ihre bisherige Sechs-Stunden-Aufbewahrung.
+
 Version 0.1.1
 -------------
 - Anzeigename in Kodi auf **Kodi Diag** vereinheitlicht; die bestehende Add-on-ID bleibt für Update-Kompatibilität unverändert.

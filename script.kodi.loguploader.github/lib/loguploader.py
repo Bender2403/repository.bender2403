@@ -30,9 +30,12 @@ ADDON_VERSION = ADDON.getAddonInfo('version')
 LOG_DIR = xbmcvfs.translatePath('special://logpath')
 LOG_FILE = os.path.join(LOG_DIR, 'kodi.log')
 TEMP_DIR = xbmcvfs.translatePath('special://temp')
-DIAGNOSTIC_BASE_DIR = os.path.join(TEMP_DIR, 'kodi_loguploader')
+DIAGNOSTIC_BASE_DIR = os.path.join(TEMP_DIR, 'kodi_diag')
+LEGACY_DIAGNOSTIC_BASE_DIR = os.path.join(TEMP_DIR, 'kodi_loguploader')
+TEST_LOG_DIR = os.path.join(DIAGNOSTIC_BASE_DIR, 'test-logs')
 DIAGNOSTIC_PLAYBACK_DIR = os.path.join(DIAGNOSTIC_BASE_DIR, 'diagnose')
 PENDING_PACKAGE_PATH = os.path.join(DIAGNOSTIC_BASE_DIR, 'pending-diagnostic-package.zip')
+LEGACY_PENDING_PACKAGE_PATH = os.path.join(LEGACY_DIAGNOSTIC_BASE_DIR, 'pending-diagnostic-package.zip')
 PROFILE_DIR = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
 STATE_FILE = os.path.join(PROFILE_DIR, 'diagnostic_state.json')
 ADDON_SELECTION_FILE = os.path.join(PROFILE_DIR, 'selected_addons.json')
@@ -49,6 +52,38 @@ MAX_OLD_FILTERED_LOG_SIZE = 256 * 1024
 MAX_MANIFEST_SIZE = 1024 * 1024
 MAX_PACKAGE_SIZE = 20 * 1024 * 1024
 MAX_MANIFESTS = 8
+
+
+def _ensure_temp_dirs():
+    """Create Kodi Diag directories and migrate legacy diagnostic data safely."""
+    if not os.path.isdir(DIAGNOSTIC_BASE_DIR):
+        os.makedirs(DIAGNOSTIC_BASE_DIR)
+    if not os.path.isdir(TEST_LOG_DIR):
+        os.makedirs(TEST_LOG_DIR)
+    legacy_playback = os.path.join(LEGACY_DIAGNOSTIC_BASE_DIR, 'diagnose')
+    if os.path.isdir(legacy_playback):
+        if not os.path.isdir(DIAGNOSTIC_PLAYBACK_DIR):
+            shutil.move(legacy_playback, DIAGNOSTIC_PLAYBACK_DIR)
+        else:
+            for name in os.listdir(legacy_playback):
+                source_path = os.path.join(legacy_playback, name)
+                target_path = os.path.join(DIAGNOSTIC_PLAYBACK_DIR, name)
+                if not os.path.exists(target_path):
+                    shutil.move(source_path, target_path)
+    if os.path.isfile(LEGACY_PENDING_PACKAGE_PATH) and not os.path.exists(PENDING_PACKAGE_PATH):
+        shutil.move(LEGACY_PENDING_PACKAGE_PATH, PENDING_PACKAGE_PATH)
+
+
+def _clear_test_logs_if_disabled():
+    """Remove only the dedicated test-log folder when test mode is disabled."""
+    if _setting_enabled('test_mode'):
+        return
+    if os.path.isdir(TEST_LOG_DIR):
+        shutil.rmtree(TEST_LOG_DIR)
+    if xbmcvfs.exists(TEST_LOG_SELECTION_FILE):
+        xbmcvfs.delete(TEST_LOG_SELECTION_FILE)
+
+
 
 REDACTIONS = [
     (re.compile(r'(?i)(://)[^/@\s]+:[^/@\s]+@'), r'\1USER:PASSWORD@'),
@@ -393,7 +428,7 @@ def _load_test_log_paths():
             handle.close()
         paths = state.get('paths', []) if isinstance(state, dict) else []
         return testlogs.validate_test_log_paths(
-            paths, TEMP_DIR, xbmcvfs.exists, _vfs_file_size,
+            paths, TEST_LOG_DIR, xbmcvfs.exists, _vfs_file_size,
             MAX_LOG_SOURCE_SIZE, max_files=6
         )
     except Exception as exc:
@@ -415,14 +450,15 @@ def _select_test_logs(dialog):
     if not _setting_enabled('test_mode'):
         dialog.ok(ADDON_NAME, _s(32060, 'Aktiviere zuerst den Testmodus in den Add-on-Einstellungen.'))
         return False
+    _ensure_temp_dirs()
     selected = dialog.browseMultiple(
-        1, _s(32057, 'Test-Logdateien aus dem Kodi-Temp-Ordner auswählen'),
-        'files', '.log', False, False, TEMP_DIR
+        1, _s(32057, 'Test-Logdateien aus dem Kodi-Diag-Testordner auswählen'),
+        'files', '.log', False, False, TEST_LOG_DIR
     )
     if not selected:
         return False
     valid = testlogs.validate_test_log_paths(
-        selected, TEMP_DIR, xbmcvfs.exists, _vfs_file_size,
+        selected, TEST_LOG_DIR, xbmcvfs.exists, _vfs_file_size,
         MAX_LOG_SOURCE_SIZE, max_files=6
     )
     if not valid:
@@ -773,7 +809,7 @@ def _build_diagnostic_package():
     if not os.path.isdir(TEMP_DIR):
         os.makedirs(TEMP_DIR)
     file_descriptor, package_path = tempfile.mkstemp(
-        prefix='kodi-diagnostics-', suffix='.zip', dir=TEMP_DIR
+        prefix='kodi-diagnostics-', suffix='.zip', dir=DIAGNOSTIC_BASE_DIR
     )
     os.close(file_descriptor)
     try:
@@ -838,31 +874,54 @@ def _github_upload_bytes(data, filename, folder='logs'):
 
 
 def _github_upload_file(file_path, filename, folder='logs'):
-    """Base64-encode a local file incrementally before the Contents API upload."""
+    """Encode and upload a package with non-blocking phase-based progress."""
     file_size = os.path.getsize(file_path)
     if file_size <= 0 or file_size > MAX_PACKAGE_SIZE:
         raise RuntimeError('Diagnosepaket fehlt oder überschreitet das Upload-Limit von 20 MB.')
 
+    _ensure_temp_dirs()
+    progress = None
     file_descriptor, encoded_path = tempfile.mkstemp(
-        prefix='kodi-upload-', suffix='.b64', dir=TEMP_DIR
+        prefix='kodi-diag-upload-', suffix='.b64', dir=DIAGNOSTIC_BASE_DIR
     )
     try:
+        try:
+            progress = xbmcgui.DialogProgressBG()
+            progress.create(ADDON_NAME, _s(32068, 'Diagnosepaket wird vorbereitet'))
+        except Exception:
+            progress = None
+
+        encoded_bytes = 0
         with os.fdopen(file_descriptor, 'wb') as encoded_file:
             with open(file_path, 'rb') as source_file:
                 while True:
                     chunk = source_file.read(48 * 1024)
                     if not chunk:
                         break
-                    encoded_file.write(base64.b64encode(chunk))
-
+                    encoded = base64.b64encode(chunk)
+                    encoded_file.write(encoded)
+                    encoded_bytes += len(chunk)
+                    if progress:
+                        percent = min(90, int(encoded_bytes * 90 / file_size))
+                        progress.update(percent, ADDON_NAME, _s(32069, 'Diagnosepaket wird für den Upload vorbereitet'))
+        if progress:
+            progress.update(95, ADDON_NAME, _s(32070, 'Diagnosepaket wird übertragen'))
         with open(encoded_path, 'r', encoding='ascii') as encoded_file:
             encoded_content = encoded_file.read()
-        return _github_upload_base64(encoded_content, filename, folder)
+        destination = _github_upload_base64(encoded_content, filename, folder)
+        if progress:
+            progress.update(100, ADDON_NAME, _s(32071, 'Diagnosepaket-Upload abgeschlossen'))
+        return destination
     finally:
         try:
             os.remove(encoded_path)
         except OSError:
             pass
+        if progress:
+            try:
+                progress.close()
+            except Exception:
+                pass
 
 
 def _github_upload_log(content):
@@ -882,25 +941,54 @@ def _paste_upload(content):
 
 def _upload_normal_log():
     target = ADDON.getSetting('upload_target') or 'github'
-    if _setting_enabled('test_mode'):
-        paths = _load_test_log_paths()
-        if not paths:
-            raise RuntimeError('Testmodus ist aktiv. Bitte zuerst Test-Logdateien im Kodi-Temp-Ordner auswählen.')
-        destinations = []
-        stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
-        for index, path in enumerate(paths, 1):
-            content = _read_log(path)
-            if target == 'paste':
-                destination = _paste_upload(content)
-            else:
-                filename = 'test-%s-%02d-%s' % (stamp, index, os.path.basename(path))
-                destination = _github_upload_bytes(content.encode('utf-8'), filename)
-            destinations.append('%s: %s' % (os.path.basename(path), destination))
-        return '\\n'.join(destinations)
+    progress = None
+    try:
+        try:
+            progress = xbmcgui.DialogProgressBG()
+            progress.create(ADDON_NAME, _s(32064, 'Log wird vorbereitet'))
+        except Exception:
+            progress = None
 
-    content = _read_log()
-    destination = _paste_upload(content) if target == 'paste' else _github_upload_log(content)
-    return destination
+        if _setting_enabled('test_mode'):
+            paths = _load_test_log_paths()
+            if not paths:
+                raise RuntimeError('Testmodus ist aktiv. Bitte zuerst Test-Logdateien im Kodi-Diag-Testordner auswählen.')
+            destinations = []
+            stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+            total = len(paths)
+            for index, path in enumerate(paths, 1):
+                name = os.path.basename(path)
+                base = int((index - 1) * 100 / total)
+                if progress:
+                    progress.update(base, ADDON_NAME, _s(32065, 'Datei {index} von {total}: wird gelesen und gefiltert — {name}').format(index=index, total=total, name=name))
+                content = _read_log(path)
+                if progress:
+                    progress.update(min(99, base + max(1, 50 // total)), ADDON_NAME, _s(32066, 'Datei {index} von {total}: wird hochgeladen — {name}').format(index=index, total=total, name=name))
+                if target == 'paste':
+                    destination = _paste_upload(content)
+                else:
+                    filename = 'test-%s-%02d-%s' % (stamp, index, name)
+                    destination = _github_upload_bytes(content.encode('utf-8'), filename)
+                destinations.append('%s: %s' % (name, destination))
+                if progress:
+                    progress.update(int(index * 100 / total), ADDON_NAME, _s(32067, 'Datei {index} von {total}: abgeschlossen — {name}').format(index=index, total=total, name=name))
+            return '\n'.join(destinations)
+
+        if progress:
+            progress.update(10, ADDON_NAME, _s(32064, 'Kodi-Log wird gelesen und gefiltert'))
+        content = _read_log()
+        if progress:
+            progress.update(55, ADDON_NAME, _s(32072, 'Kodi-Log wird hochgeladen'))
+        destination = _paste_upload(content) if target == 'paste' else _github_upload_log(content)
+        if progress:
+            progress.update(100, ADDON_NAME, _s(32067, 'Upload abgeschlossen'))
+        return destination
+    finally:
+        if progress:
+            try:
+                progress.close()
+            except Exception:
+                pass
 
 
 
@@ -930,6 +1018,8 @@ def _upload_diagnostic_package(dialog):
 
 
 def main():
+    _ensure_temp_dirs()
+    _clear_test_logs_if_disabled()
     dialog = xbmcgui.Dialog()
     choices = [
         _s(32011, 'Upload Kodi log normally'),
@@ -940,7 +1030,8 @@ def main():
         _s(32054, 'Gespeichertes Diagnosepaket erneut hochladen'),
     ]
     if _setting_enabled('test_mode'):
-        choices.append(_s(32057, 'Test-Logdateien aus dem Kodi-Temp-Ordner auswählen'))
+        selected_count = len(_load_test_log_paths())
+        choices.append(_s(32057, 'Test-Logdateien auswählen') + ' — ' + _s(32063, 'Ausgewählt: {count} Test-Logdateien').format(count=selected_count))
     try:
         _debug('Uploader gestartet; Add-on-Version %s.' % ADDON_VERSION)
         # Keep the main menu open after the add-on selection dialog returns.

@@ -1,4 +1,6 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<addons>\n<addon id="repository.bender2403" name="Bender2403 Add-on Repository" version="1.0.2" provider-name="Bender2403">
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addons>
+<addon id="repository.bender2403" name="Bender2403 Add-on Repository" version="1.0.2" provider-name="Bender2403">
   <requires>
     <import addon="xbmc.addon" version="12.0.0" />
   </requires>
@@ -17,7 +19,8 @@
       <icon>icon.jpg</icon>
     </assets>
   </extension>
-</addon>\n<addon id="repository.heptamers.stuff" name="Heptamers Stuff" version="1.0.0" provider-name="Heptamer">
+</addon>
+<addon id="repository.heptamers.stuff" name="Heptamers Stuff" version="1.0.0" provider-name="Heptamer">
     <extension point="xbmc.addon.repository" name="Heptamers Stuff">
         <dir>
             <info compressed="false">https://raw.githubusercontent.com/Heptamer/heps_stuff/master/repo/addons.xml</info>
@@ -36,7 +39,8 @@
             <fanart>fanart.jpg</fanart>
         </assets>
     </extension>
-</addon>\n<addon id="repository.jurialmunkey" name="jurialmunkey Alpha Repository" version="3.5" provider-name="jurialmunkey">
+</addon>
+<addon id="repository.jurialmunkey" name="jurialmunkey Alpha Repository" version="3.5" provider-name="jurialmunkey">
     <extension point="xbmc.addon.repository" name="jurialmunkey Alpha Repository">
         <dir>
             <info compressed="false">https://raw.githubusercontent.com/jurialmunkey/repository.jurialmunkey/master/repo/zips/addons.xml</info>
@@ -63,7 +67,8 @@
             <icon>icon.png</icon>
         </assets>
     </extension>
-</addon>\n<addon id="repository.xvault" name="xVAULT Repository" provider-name="xVAULT" version="1.0.3">
+</addon>
+<addon id="repository.xvault" name="xVAULT Repository" provider-name="xVAULT" version="1.0.3">
     <extension point="xbmc.addon.repository" name="xVAULT Repository">
         <dir>
             <info compressed="false">https://xvault.repowork.de/addons.xml</info>
@@ -81,7 +86,8 @@
             <icon>icon.png</icon>
         </assets>
     </extension>
-</addon>\n<addon id="plugin.video.rakuten.de" name="RakutenTV German [COLOR FF00EE00](light)[/COLOR]" version="1.0.4+matrix.1" provider-name="realvito">
+</addon>
+<addon id="plugin.video.rakuten.de" name="RakutenTV German [COLOR FF00EE00](light)[/COLOR]" version="1.0.4+matrix.1" provider-name="realvito">
 	<requires>
 		<import addon="xbmc.python" version="3.0.0" />
 		<import addon="script.module.certifi" version="2023.5.7" />
@@ -122,7 +128,8 @@
 - added: Rubrik = 'Alle TV-Serien'
 		</news>
 	</extension>
-</addon>\n<addon id="script.kodi.loguploader.github" name="Kodi Diag" version="0.1.2" provider-name="Meemann">
+</addon>
+<addon id="script.kodi.loguploader.github" name="Kodi Diag" version="0.1.2" provider-name="Meemann">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.requests" version="2.22.0+matrix.1" />
@@ -138,4 +145,5 @@
     <license>GPL-2.0-only</license>
     <source>https://gitlab.com/ronie/script.kodi.loguploader/</source>
   </extension>
-</addon>\n</addons>\n
+</addon>
+</addons>

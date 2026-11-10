@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Kodi Diag 0.1.1\n"
+"Project-Id-Version: Kodi Diag 0.1.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-09 00:00+0000\n"
 "PO-Revision-Date: 2026-11-09 00:00+0000\n"
@@ -257,3 +257,43 @@ msgctxt "#32062"
 msgid "{count} test log files selected. They will be processed instead of the normal Kodi logs."
 msgstr "{count} test log files selected. They will be processed instead of the normal Kodi logs."
 
+
+msgctxt "#32063"
+msgid "Ausgewählt: {count} Test-Logdateien"
+msgstr "Selected: {count} test log files"
+
+msgctxt "#32064"
+msgid "Log wird vorbereitet"
+msgstr "Preparing log"
+
+msgctxt "#32065"
+msgid "Datei {index} von {total}: wird gelesen und gefiltert — {name}"
+msgstr "File {index} of {total}: reading and filtering — {name}"
+
+msgctxt "#32066"
+msgid "Datei {index} von {total}: wird hochgeladen — {name}"
+msgstr "File {index} of {total}: uploading — {name}"
+
+msgctxt "#32067"
+msgid "Datei {index} von {total}: abgeschlossen — {name}"
+msgstr "File {index} of {total}: complete — {name}"
+
+msgctxt "#32068"
+msgid "Diagnosepaket wird vorbereitet"
+msgstr "Preparing diagnostic package"
+
+msgctxt "#32069"
+msgid "Diagnosepaket wird für den Upload vorbereitet"
+msgstr "Preparing diagnostic package for upload"
+
+msgctxt "#32070"
+msgid "Diagnosepaket wird übertragen"
+msgstr "Transferring diagnostic package"
+
+msgctxt "#32071"
+msgid "Diagnosepaket-Upload abgeschlossen"
+msgstr "Diagnostic package upload complete"
+
+msgctxt "#32072"
+msgid "Kodi-Log wird hochgeladen"
+msgstr "Uploading Kodi log"
