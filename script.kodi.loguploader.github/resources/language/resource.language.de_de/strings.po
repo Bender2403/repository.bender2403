@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Kodi Logfile Uploader (GitHub) 0.0.4\n"
+"Project-Id-Version: Kodi Logfile Uploader (GitHub) 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-09 00:00+0000\n"
 "PO-Revision-Date: 2026-11-09 00:00+0000\n"
@@ -114,8 +114,8 @@ msgid "Operation failed: {error}"
 msgstr "Vorgang fehlgeschlagen: {error}"
 
 msgctxt "#32028"
-msgid "kodi.log was not found, is empty or exceeds 10 MB."
-msgstr "kodi.log wurde nicht gefunden, ist leer oder größer als 10 MB."
+msgid "kodi.log was not found, is empty or exceeds 64 MiB."
+msgstr "kodi.log wurde nicht gefunden, ist leer oder größer als 64 MiB."
 
 msgctxt "#32029"
 msgid "Kodi does not expose the global debug switch."

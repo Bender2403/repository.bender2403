@@ -1,6 +1,11 @@
 Kodi Logfile Uploader (GitHub)
 ==============================
 
+Version 0.1.0
+-------------
+- Add-on-Version angehoben, damit Kodi die bereits enthaltenen neuen Einstellungen und deren Definitionen als reguläres Update übernimmt.
+- Die speicherschonende Verarbeitung großer Kodi-Logs bis 64 MiB aus Version 0.0.9 bleibt enthalten; keine zusätzliche Funktionsänderung gegenüber dem zuletzt veröffentlichten Quellstand.
+
 Version 0.0.9
 -------------
 - Große Kodi-Logs bis 64 MiB werden blockweise eingelesen und mit begrenztem Kandidatenspeicher gefiltert (maximal 20.000 Kandidaten); überlange Einzelzeilen über 256 KiB werden ausgelassen.

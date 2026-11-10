@@ -4,7 +4,7 @@ Diese eigenständige Version basiert auf Ronies Add-on `script.kodi.loguploader`
 
 **Anzeigename:** Kodi Logfile Uploader (GitHub)  
 **Add-on-ID:** `script.kodi.loguploader.github`  
-**Version:** `0.0.9`  
+**Version:** `0.1.0`  
 
 **GitHub ist das voreingestellte Upload-Ziel.** Der bisherige Dienst `paste.kodi.tv` bleibt als alternative Upload-Möglichkeit erhalten.
 
@@ -25,7 +25,7 @@ Diese eigenständige Version basiert auf Ronies Add-on `script.kodi.loguploader`
 
 Beim Start erscheint direkt das Hauptmenü. Über den Menüpunkt **Add-ons zur Protokollpriorisierung auswählen** kannst du festlegen, für welche aktivierten Add-ons Logmeldungen bei der Diagnose bevorzugt werden. Deaktivierte Add-ons werden nicht angezeigt. Die Auswahl wird gespeichert und kann jederzeit über diesen Menüpunkt geändert werden. Nach dem Bestätigen kehrt das Add-on automatisch zum Hauptmenü zurück.
 
-Große Logs bis 10 MiB werden eingelesen. Fehler, Warnungen, Tracebacks, Meldungen der ausgewählten Add-ons und der jeweilige Kontext werden bevorzugt. Wiederholte identische Meldungen werden zusammengefasst. Bereinigte Originale werden zusätzlich beigelegt, sofern sie höchstens 2 MiB groß sind.
+Große Logs bis 64 MiB werden blockweise eingelesen und speicherschonend gefiltert. Fehler, Warnungen, Tracebacks, Meldungen der ausgewählten Add-ons und der jeweilige Kontext werden bevorzugt. Wiederholte identische Meldungen werden zusammengefasst. Bereinigte Originale werden zusätzlich beigelegt, sofern sie höchstens 2 MiB groß sind.
 
 Unter den Add-on-Einstellungen lässt sich der **automatische Diagnosemodus bei Video-/Stream-Wiedergabe** einschalten (standardmäßig aus). Jede Video-Wiedergabe wird getrennt erfasst; Musik wird ignoriert. Beim Ausschalten wird sofort ein Diagnosepaket erstellt und vor dem Upload nachgefragt. Bei Ablehnung werden die Dateien gelöscht. Nach fehlgeschlagenem Upload kannst du das Paket behalten oder löschen. Ein behaltenes Paket lässt sich über den Menüpunkt **Gespeichertes Diagnosepaket erneut hochladen** erneut senden. Die Erfassung schreibt bereinigte Logs blockweise nach `special://temp/kodi_loguploader/diagnose/`. CDM-Dateien, Schlüssel und rohe Lizenzdaten werden nicht gesammelt.
 
