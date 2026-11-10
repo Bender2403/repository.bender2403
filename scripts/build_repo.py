@@ -44,9 +44,9 @@ EXTERNAL_ZIPS = [
     {
         "repository": "Bender2403/kodi-rakuten-tv-addon",
         "ref": "kodi-logs",
-        "path": "dist/script.kodi.loguploader.github-0.1.1.zip",
+        "path": "dist/script.kodi.loguploader.github-0.1.2.zip",
         "addon_id": "script.kodi.loguploader.github",
-        "version": "0.1.1",
+        "version": "0.1.2",
     },
 ]
 
@@ -182,8 +182,8 @@ for item in EXTERNAL_ZIPS:
 if not all_addons:
     raise SystemExit("Keine Add-ons in addons/ gefunden.")
 
-xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<addons>\n'
-xml += "\n".join(all_addons) + "\n</addons>\n"
+xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\\n<addons>\\n'
+xml += "\\n".join(all_addons) + "\\n</addons>\\n"
 xml_bytes = xml.encode("utf-8")
 digest = hashlib.md5(xml_bytes).hexdigest()
 
@@ -199,5 +199,5 @@ digest = hashlib.md5(xml_bytes).hexdigest()
     encoding="utf-8",
 )
 
-(ROOT / "generated-addon-dirs.txt").write_text("\n".join(generated_dirs) + "\n", encoding="utf-8")
+(ROOT / "generated-addon-dirs.txt").write_text("\\n".join(generated_dirs) + "\\n", encoding="utf-8")
 print(f"Repository gebaut: {len(all_addons)} Add-on(s): {', '.join(generated_dirs)}")
