@@ -640,7 +640,7 @@ def _build_diagnostic_package():
         _debug('Diagnosepaket erstellt: %d Bytes.' % package_size)
         if package_size > MAX_PACKAGE_SIZE:
             raise RuntimeError('Diagnosepaket überschreitet das Upload-Limit von 20 MB.')
-        if not any(item.startswith('Log aufgenommen:') for item in report):
+        if not any(item.startswith(('Log aufgenommen:', 'Wiedergabe-Datei aufgenommen:')) for item in report):
             raise RuntimeError('Es konnten keine Kodi-Logdateien in das Diagnosepaket aufgenommen werden.')
         return package_path
     except Exception:
