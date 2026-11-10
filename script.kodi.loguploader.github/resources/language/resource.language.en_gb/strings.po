@@ -161,3 +161,24 @@ msgstr "Enable this add-on's debug logging"
 msgctxt "#32033"
 msgid "GitHub upload failed (HTTP {status}): {detail}"
 msgstr "GitHub upload failed (HTTP {status}): {detail}"
+
+
+msgctxt "#32040"
+msgid "Protocol logging"
+msgstr "Protocol logging"
+
+msgctxt "#32041"
+msgid "Enable HTTP/HTTPS protocol logging"
+msgstr "Enable HTTP/HTTPS protocol logging"
+
+msgctxt "#32042"
+msgid "Captures additional cURL log lines with HTTP status codes and incoming/outgoing headers. Headers and URLs may contain sensitive data; known credentials are sanitized before upload."
+msgstr "Captures additional cURL log lines with HTTP status codes and incoming/outgoing headers. Headers and URLs may contain sensitive data; known credentials are sanitized before upload."
+
+msgctxt "#32043"
+msgid "Enable DRM logging"
+msgstr "Enable DRM logging"
+
+msgctxt "#32044"
+msgid "Captures InputStream Adaptive debug messages, including Widevine session and license events. Raw license challenges and responses are not collected."
+msgstr "Captures InputStream Adaptive debug messages, including Widevine session and license events. Raw license challenges and responses are not collected."

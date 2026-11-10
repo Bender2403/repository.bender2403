@@ -3,6 +3,8 @@ Kodi Logfile Uploader (GitHub)
 
 Version 0.0.8
 -------------
+- Zwei unabhängige Einstellungen für HTTP-/HTTPS- und DRM-Protokollierung ergänzt; Diagnosemodus wendet sie ohne Rückfrage an und stellt zuvor aktive Kodi-Logging-Einstellungen anschließend wieder her.
+- HTTP-/HTTPS-Diagnose aktiviert Kodis cURL-Komponentenlogging (Statuscodes und Header); DRM-Diagnose erfasst InputStream-Adaptive-/Widevine-Debugmeldungen. Rohdaten-Sammler für DRM-/Lizenzdateien entfernt; deaktivierte Protokollbereiche werden aus dem Diagnosepaket herausgefiltert.
 - Nach dem Bestätigen oder Abbrechen der Add-on-Auswahl wird wieder das Hauptmenü angezeigt. Die Menüschleife gilt nur für diesen Menüpunkt; Upload- und Diagnoseaktionen behalten ihr bisheriges Verhalten.
 
 Version 0.0.7

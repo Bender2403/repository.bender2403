@@ -129,3 +129,37 @@ def filter_log(content, addon_tokens=None, max_output_bytes=2 * 1024 * 1024,
             if _matches_addon(line, addon_tokens)
         ),
     }
+
+
+
+def filter_protocol_logs(content, http_enabled=True, drm_enabled=True):
+    """Remove protocol-specific debug lines disabled in the add-on settings.
+
+    Kodi uses its global debug level for InputStream Adaptive messages and a
+    separate CURL component mask for HTTP headers/status lines. This filter
+    keeps the uploaded package consistent with the user's two independent
+    protocol switches.
+    """
+    if http_enabled and drm_enabled:
+        return content, {"http_removed": 0, "drm_removed": 0}
+
+    kept = []
+    http_removed = 0
+    drm_removed = 0
+    for line in content.splitlines(True):
+        if not http_enabled and re.search(
+                r'(?:Curl::Debug|HEADER_(?:IN|OUT):|<[^>]*curl[^>]*>)',
+                line, re.I):
+            http_removed += 1
+            continue
+        if not drm_enabled and re.search(
+                r'(?:inputstream\.adaptive|AddOnLog:\s*inputstream\.adaptive)',
+                line, re.I):
+            drm_removed += 1
+            continue
+        kept.append(line)
+
+    return ''.join(kept), {
+        "http_removed": http_removed,
+        "drm_removed": drm_removed,
+    }

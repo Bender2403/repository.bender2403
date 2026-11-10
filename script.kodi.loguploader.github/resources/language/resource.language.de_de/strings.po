@@ -161,3 +161,24 @@ msgstr "Debug-Protokollierung dieses Add-ons aktivieren"
 msgctxt "#32033"
 msgid "GitHub upload failed (HTTP {status}): {detail}"
 msgstr "GitHub-Upload fehlgeschlagen (HTTP {status}): {detail}"
+
+
+msgctxt "#32040"
+msgid "Protokollierung"
+msgstr "Protokollierung"
+
+msgctxt "#32041"
+msgid "HTTP-/HTTPS-Protokollierung aktivieren"
+msgstr "HTTP-/HTTPS-Protokollierung aktivieren"
+
+msgctxt "#32042"
+msgid "Erfasst zusätzliche cURL-Protokollzeilen mit HTTP-Statuscodes sowie ein- und ausgehenden Headern. Header und URLs können sensible Angaben enthalten; bekannte Zugangsdaten werden vor dem Upload bereinigt."
+msgstr "Erfasst zusätzliche cURL-Protokollzeilen mit HTTP-Statuscodes sowie ein- und ausgehenden Headern. Header und URLs können sensible Angaben enthalten; bekannte Zugangsdaten werden vor dem Upload bereinigt."
+
+msgctxt "#32043"
+msgid "DRM-Protokollierung aktivieren"
+msgstr "DRM-Protokollierung aktivieren"
+
+msgctxt "#32044"
+msgid "Erfasst Debug-Meldungen von InputStream Adaptive, darunter Widevine-Sitzungs- und Lizenzereignisse. Es werden keine rohen Lizenz-Challenges oder Lizenzantworten gesammelt."
+msgstr "Erfasst Debug-Meldungen von InputStream Adaptive, darunter Widevine-Sitzungs- und Lizenzereignisse. Es werden keine rohen Lizenz-Challenges oder Lizenzantworten gesammelt."

@@ -47,8 +47,9 @@ REDACTIONS = [
     (re.compile(r'(?i)(://)[^/@\s]+:[^/@\s]+@'), r'\1USER:PASSWORD@'),
     (re.compile(r'(?is)<user>.*?</user>'), '<user>USER</user>'),
     (re.compile(r'(?is)<pass>.*?</pass>'), '<pass>PASSWORD</pass>'),
-    (re.compile(r'(?i)(authorization\s*[:=]\s*)(?:bearer|basic)\s+[^\s,;]+'), r'\1[REDACTED]'),
+    (re.compile(r'(?i)(authorization\s*[:=]\s*)[^\r\n]+'), r'\1[REDACTED]'),
     (re.compile(r'(?i)(cookie\s*[:=]\s*)[^\r\n]+'), r'\1[REDACTED]'),
+    (re.compile(r'(?i)(\b(?:proxy-authorization|set-cookie|x-api-key|x-auth-token|x-access-token|x-csrf-token|x-xsrf-token|x-drm-token|x-license-token)\s*:\s*)[^\r\n]+'), r'\1[REDACTED]'),
     (re.compile(r'(?i)(\b(?:access_token|refresh_token|token|api[_-]?key|password|passwd|secret|signature|sig|hdnts|jwt|auth|sessionid|session_id|policy|key-pair-id)\b\s*[=:]\s*)["\']?[^\s&"\']+'), r'\1[REDACTED]'),
     (re.compile(r'(?i)([?&](?:access_token|refresh_token|token|api[_-]?key|password|passwd|secret|signature|sig|hdnts?|hdnea|jwt|auth|sessionid|session_id|policy|key-pair-id|expires|x-amz-[a-z-]+|x-goog-[a-z-]+)=)[^&\s"\']+'), r'\1[REDACTED]'),
 ]
@@ -130,19 +131,27 @@ def _jsonrpc(method, params=None):
     return response.get('result')
 
 
-def _get_debug_state():
-    result = _jsonrpc('Settings.GetSettingValue', {'setting': 'debug.showloginfo'})
+def _get_setting_value(setting):
+    result = _jsonrpc('Settings.GetSettingValue', {'setting': setting})
     if not isinstance(result, dict) or 'value' not in result:
-        raise RuntimeError(_s(32029, 'Kodi does not expose the global debug switch.'))
-    return bool(result['value'])
+        raise RuntimeError('Kodi stellt die Einstellung %s nicht bereit.' % setting)
+    return result['value']
+
+
+def _set_setting_value(setting, value):
+    result = _jsonrpc('Settings.SetSettingValue', {
+        'setting': setting, 'value': value
+    })
+    if result is not True:
+        raise RuntimeError('Kodi hat die Änderung der Einstellung %s nicht bestätigt.' % setting)
+
+
+def _get_debug_state():
+    return bool(_get_setting_value('debug.showloginfo'))
 
 
 def _set_debug_state(enabled):
-    result = _jsonrpc('Settings.SetSettingValue', {
-        'setting': 'debug.showloginfo', 'value': bool(enabled)
-    })
-    if result is not True:
-        raise RuntimeError('Kodi hat die Änderung des Debug-Status nicht bestätigt.')
+    _set_setting_value('debug.showloginfo', bool(enabled))
 
 
 def _load_state():
@@ -268,30 +277,86 @@ def _selected_addon_tokens():
     return [token for token in tokens if token]
 
 
+def _setting_enabled(setting_id):
+    try:
+        return ADDON.getSetting(setting_id).strip().lower() == 'true'
+    except Exception:
+        return False
+
+
 def _start_diagnostics(dialog):
-    if not dialog.yesno(_s(32015, 'Kodi Logfile Uploader'), _s(32016, 'Enable Kodi-wide debug logging?') + '\n\n' + _s(32017, 'During diagnostics, more technical details and stream addresses may appear in the local Kodi log. Known credentials and URL parameters are sanitized before upload.')):
-        return
+    http_enabled = _setting_enabled('http_logging')
+    drm_enabled = _setting_enabled('drm_logging')
     state = _load_state()
     if state:
         dialog.ok(ADDON_NAME, _s(32018, 'A diagnostic session is already active. After reproducing the issue, create the diagnostic package or restore the settings.'))
         return
-    original = _get_debug_state()
-    _save_state({'original_debug': original, 'changed': not original})
+
+    original_debug = _get_debug_state()
+    state = {
+        'original_debug': original_debug,
+        'changed_debug': bool((http_enabled or drm_enabled) and not original_debug),
+        'http_logging': http_enabled,
+        'drm_logging': drm_enabled,
+        'changed_extralogging': False,
+        'changed_components': False,
+    }
+
+    components = None
+    if http_enabled:
+        state['original_extralogging'] = bool(_get_setting_value('debug.extralogging'))
+        current_components = _get_setting_value('debug.setextraloglevel')
+        if not isinstance(current_components, list):
+            raise RuntimeError('Kodi hat keine gültige Liste der zusätzlichen Logging-Komponenten geliefert.')
+        components = list(current_components)
+        state['original_components'] = list(current_components)
+        if 64 not in components:
+            components.append(64)
+            state['changed_components'] = True
+        state['changed_extralogging'] = not state['original_extralogging']
+
+    _save_state(state)
     try:
-        if not original:
+        if state['changed_debug']:
             _set_debug_state(True)
+        if http_enabled:
+            # Enable the component selector before writing its integer-list value.
+            if state['changed_extralogging']:
+                _set_setting_value('debug.extralogging', True)
+            if state['changed_components']:
+                _set_setting_value('debug.setextraloglevel', components)
     except Exception:
-        _delete_state()
+        try:
+            _restore_diagnostics()
+        except Exception as restore_error:
+            _log('Wiederherstellung nach Startfehler fehlgeschlagen: %s' % restore_error, xbmc.LOGERROR)
         raise
-    dialog.ok(ADDON_NAME, _s(32019, 'Diagnostic mode is active.') + '\n\n' + _s(32020, 'Reproduce the issue now. Then start this add-on again and choose the diagnostic package option.'))
+
+    if not http_enabled and not drm_enabled:
+        detail = 'Keine zusätzliche HTTP-/HTTPS- oder DRM-Protokollierung aktiviert. Kodi-Logging bleibt unverändert.'
+    else:
+        enabled = []
+        if http_enabled:
+            enabled.append('HTTP/HTTPS (cURL)')
+        if drm_enabled:
+            enabled.append('DRM / InputStream Adaptive')
+        detail = 'Aktiviert: ' + ', '.join(enabled)
+    dialog.ok(ADDON_NAME, _s(32019, 'Diagnostic mode is active.') + '\n\n' + detail + '\n\n' + _s(32020, 'Reproduce the issue now. Then start this add-on again and choose the diagnostic package option.'))
 
 
 def _restore_diagnostics():
     state = _load_state()
     if not state:
         return False
-    if state.get('changed'):
+
+    # Restore component selection before disabling its parent setting.
+    if state.get('changed_components'):
+        _set_setting_value('debug.setextraloglevel', state.get('original_components', []))
+    if state.get('changed_extralogging'):
+        _set_setting_value('debug.extralogging', bool(state.get('original_extralogging', False)))
+    if state.get('changed_debug') or ('changed_debug' not in state and state.get('changed')):
         _set_debug_state(bool(state.get('original_debug', False)))
+
     _delete_state()
     return True
 
@@ -329,6 +394,17 @@ def _collect_logs(zf, report):
                 continue
 
             sanitized = _clean_log(content)
+            protocol_content, protocol_stats = logfilter.filter_protocol_logs(
+                sanitized,
+                http_enabled=_setting_enabled('http_logging'),
+                drm_enabled=_setting_enabled('drm_logging'),
+            )
+            sanitized = protocol_content
+            if protocol_stats['http_removed'] or protocol_stats['drm_removed']:
+                report.append(
+                    'Protokollzeilen gemäß Add-on-Einstellungen ausgelassen: HTTP/HTTPS=%d, DRM=%d' %
+                    (protocol_stats['http_removed'], protocol_stats['drm_removed'])
+                )
             source_bytes = sanitized.encode('utf-8')
             if len(source_bytes) <= MAX_LOG_SIZE:
                 zf.writestr('logs/' + name, source_bytes)
@@ -391,38 +467,6 @@ def _collect_manifests(zf, report):
 
 
 
-def _collect_license_diagnostics(zf, report):
-    """Collect only small, text-based DRM/license diagnostics with matching filenames."""
-    count = 0
-    total = 0
-    allowed_extensions = ('.log', '.txt', '.json', '.xml')
-    name_pattern = re.compile(r'(?:drm|license|widevine|cdm)', re.I)
-    for root_name, root in (('temp', TEMP_DIR), ('log', LOG_DIR)):
-        try:
-            names = os.listdir(root)
-        except Exception:
-            continue
-        for name in sorted(names):
-            if count >= 6:
-                break
-            if not name_pattern.search(name) or not name.lower().endswith(allowed_extensions):
-                continue
-            path = os.path.join(root, name)
-            try:
-                size = os.path.getsize(path)
-                if size <= 0 or size > 512 * 1024 or total + size > 1024 * 1024:
-                    report.append('DRM-/Lizenzdiagnose ausgelassen (Größenlimit): ' + name)
-                    continue
-                content = _read_vfs_file(path, 512 * 1024)
-                if content:
-                    _add_text(zf, 'license-diagnostics/' + root_name + '-' + name, content)
-                    count += 1
-                    total += size
-                    report.append('DRM-/Lizenzdiagnose aufgenommen: ' + name)
-            except Exception as exc:
-                report.append('DRM-/Lizenzdiagnose ausgelassen: %s (%s)' % (name, exc))
-
-
 def _system_report():
     labels = {
         'Kodi-Version': 'System.BuildVersion',
@@ -448,7 +492,10 @@ def _system_report():
 
 def _build_diagnostic_package():
     """Build the ZIP on disk so the complete archive is not held in RAM."""
-    report = []
+    report = [
+        'HTTP-/HTTPS-Protokollierung: ' + ('aktiv' if _setting_enabled('http_logging') else 'inaktiv'),
+        'DRM-Protokollierung: ' + ('aktiv' if _setting_enabled('drm_logging') else 'inaktiv'),
+    ]
     if not os.path.isdir(TEMP_DIR):
         os.makedirs(TEMP_DIR)
     file_descriptor, package_path = tempfile.mkstemp(
@@ -461,7 +508,6 @@ def _build_diagnostic_package():
         ) as archive:
             _collect_logs(archive, report)
             _collect_manifests(archive, report)
-            _collect_license_diagnostics(archive, report)
             _add_text(archive, 'system-info.txt', _system_report())
             _add_text(archive, 'package-report.txt', '\n'.join(report))
 
@@ -587,7 +633,7 @@ def main():
     dialog = xbmcgui.Dialog()
     choices = [
         _s(32011, 'Upload Kodi log normally'),
-        _s(32012, 'Start diagnostics (Kodi-wide debug logging)'),
+        _s(32012, 'Start diagnostics (configured protocol logging)'),
         _s(32013, 'Create and upload diagnostic package'),
         _s(32014, 'Restore debug settings'),
         _s(32034, 'Select add-ons to prioritize in logs'),

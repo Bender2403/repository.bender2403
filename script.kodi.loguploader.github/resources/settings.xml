@@ -34,6 +34,18 @@
           <control type="toggle"/>
         </setting>
       </group>
+      <group id="protocol_logging" label="32040">
+        <setting id="http_logging" type="boolean" label="32041">
+          <default>false</default>
+          <help>32042</help>
+          <control type="toggle"/>
+        </setting>
+        <setting id="drm_logging" type="boolean" label="32043">
+          <default>false</default>
+          <help>32044</help>
+          <control type="toggle"/>
+        </setting>
+      </group>
     </category>
     <category id="expert" label="32008">
       <group id="authentication" label="32010">
