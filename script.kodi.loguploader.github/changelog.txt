@@ -1,6 +1,10 @@
 Kodi Logfile Uploader (GitHub)
 ==============================
 
+Version 0.0.9
+-------------
+- Versionsnummer erhöht, damit Kodi die aktualisierten Add-on-Metadaten und die bereits in Version 0.0.8 ergänzten HTTP-/HTTPS- und DRM-Einstellungen als neues Update erkennt. Keine zusätzliche Funktionsänderung gegenüber Version 0.0.8.
+
 Version 0.0.8
 -------------
 - Zwei unabhängige Einstellungen für HTTP-/HTTPS- und DRM-Protokollierung ergänzt; Diagnosemodus wendet sie ohne Rückfrage an und stellt zuvor aktive Kodi-Logging-Einstellungen anschließend wieder her.
