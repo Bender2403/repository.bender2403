@@ -447,23 +447,68 @@ def _save_test_log_paths(paths):
 
 
 def _select_test_logs(dialog):
+    """Select test logs from a Kodi-owned list, without opening Kodi's file browser."""
     if not _setting_enabled('test_mode'):
         dialog.ok(ADDON_NAME, _s(32060, 'Aktiviere zuerst den Testmodus in den Add-on-Einstellungen.'))
         return False
+
     _ensure_temp_dirs()
-    selected = dialog.browseMultiple(
-        1, _s(32057, 'Test-Logdateien aus dem Kodi-Diag-Testordner auswählen'),
-        'files', '.log', False, False, TEST_LOG_DIR
+    available = testlogs.list_test_log_paths(
+        TEST_LOG_DIR, os.listdir, xbmcvfs.exists, _vfs_file_size,
+        MAX_LOG_SOURCE_SIZE
     )
-    if not selected:
+    if not available:
+        dialog.ok(
+            ADDON_NAME,
+            _s(32073, 'Im Kodi-Diag-Testordner wurden keine gültigen .log-Dateien gefunden.')
+        )
         return False
+
+    previous = set(_load_test_log_paths())
+    options = []
+    for path in available:
+        size_mib = _vfs_file_size(path) / float(1024 * 1024)
+        options.append('%s  (%.2f MiB)' % (os.path.basename(path), size_mib))
+    preselected = [
+        index for index, path in enumerate(available)
+        if os.path.realpath(path) in previous
+    ]
+    selected_indices = dialog.multiselect(
+        _s(32057, 'Test-Logdateien aus dem Kodi-Diag-Testordner auswählen'),
+        options,
+        preselect=preselected,
+    )
+    if selected_indices is None:
+        return False
+    if len(selected_indices) > 6:
+        dialog.ok(
+            ADDON_NAME,
+            _s(32074, 'Es können höchstens sechs Test-Logdateien ausgewählt werden.')
+        )
+        return False
+
+    selected = [
+        available[index] for index in selected_indices
+        if isinstance(index, int) and 0 <= index < len(available)
+    ]
+    if len(selected) != len(selected_indices):
+        dialog.ok(
+            ADDON_NAME,
+            _s(32061, 'Keine gültigen .log-Dateien im Kodi-Diag-Testordner ausgewählt.')
+        )
+        return False
+
     valid = testlogs.validate_test_log_paths(
         selected, TEST_LOG_DIR, xbmcvfs.exists, _vfs_file_size,
         MAX_LOG_SOURCE_SIZE, max_files=6
     )
-    if not valid:
-        dialog.ok(ADDON_NAME, _s(32061, 'Keine gültigen .log-Dateien im Kodi-Temp-Ordner ausgewählt. Dateien müssen vorhanden und höchstens 64 MiB groß sein.'))
+    if len(valid) != len(selected):
+        dialog.ok(
+            ADDON_NAME,
+            _s(32061, 'Keine gültigen .log-Dateien im Kodi-Diag-Testordner ausgewählt.')
+        )
         return False
+
     _save_test_log_paths(valid)
     dialog.ok(
         ADDON_NAME,

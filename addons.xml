@@ -129,7 +129,7 @@
 		</news>
 	</extension>
 </addon>
-<addon id="script.kodi.loguploader.github" name="Kodi Diag" version="0.1.2" provider-name="Meemann">
+<addon id="script.kodi.loguploader.github" name="Kodi Diag" version="0.1.3" provider-name="Meemann">
   <requires>
     <import addon="xbmc.python" version="3.0.0" />
     <import addon="script.module.requests" version="2.22.0+matrix.1" />

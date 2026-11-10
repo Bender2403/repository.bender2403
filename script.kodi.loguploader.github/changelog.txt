@@ -1,6 +1,11 @@
 Kodi Diag
 ==============================
 
+Version 0.1.3
+-------------
+- Test-Logauswahl durch eine eigene Kodi-Mehrfachauswahlliste ersetzt; die Liste zeigt ausschließlich gültige .log-Dateien aus kodi_diag/test-logs mit Dateigröße und übernimmt vorherige Auswahlen.
+- Auswahl und Validierung bleiben auf den Testordner begrenzt; maximal sechs Dateien mit jeweils höchstens 64 MiB. Kodi-Dateibrowser und dessen fehlerhaftes Startverzeichnis werden nicht mehr verwendet.
+
 Version 0.1.2
 -------------
 - Temporäre Diagnose-Daten nach special://temp/kodi_diag verschoben; vorhandene Wiedergabe-Diagnosen und ausstehende Diagnosepakete werden bei Bedarf sicher aus dem bisherigen Ordner übernommen.
