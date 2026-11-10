@@ -4,7 +4,7 @@ Diese eigenständige Version basiert auf Ronies Add-on `script.kodi.loguploader`
 
 **Anzeigename:** Kodi Diag (GitHub)  
 **Add-on-ID:** `script.kodi.loguploader.github`  
-**Version:** `0.1.1`  
+**Version:** `0.1.4`  
 
 **GitHub ist das voreingestellte Upload-Ziel.** Der bisherige Dienst `paste.kodi.tv` bleibt als alternative Upload-Möglichkeit erhalten.
 

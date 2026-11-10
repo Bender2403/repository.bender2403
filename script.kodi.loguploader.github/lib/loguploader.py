@@ -730,10 +730,24 @@ def _offer_diagnostic_upload(dialog):
     restored = _restore_diagnostics()
     package_path = _build_diagnostic_package()
     try:
-        if not dialog.yesno(ADDON_NAME, _s(32048, 'Diagnosepaket wurde erstellt. Möchtest du es jetzt hochladen?')):
-            os.remove(package_path)
-            _remove_diagnostic_data()
-            dialog.notification(ADDON_NAME, _s(32049, 'Diagnosepaket und temporäre Dateien wurden gelöscht.'), xbmcgui.NOTIFICATION_INFO, 5000)
+        if not dialog.yesno(ADDON_NAME, _s(32048, 'Diagnostic package created. Do you want to upload it now?')):
+            # Keep the completed package for a later upload instead of deleting it.
+            if not os.path.isdir(DIAGNOSTIC_BASE_DIR):
+                os.makedirs(DIAGNOSTIC_BASE_DIR)
+            pending_path = PENDING_PACKAGE_PATH
+            if os.path.exists(pending_path):
+                stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+                pending_path = os.path.join(
+                    DIAGNOSTIC_BASE_DIR,
+                    'pending-diagnostic-package-%s.zip' % stamp
+                )
+            os.replace(package_path, pending_path)
+            try:
+                if os.path.isdir(DIAGNOSTIC_PLAYBACK_DIR):
+                    shutil.rmtree(DIAGNOSTIC_PLAYBACK_DIR)
+            except Exception as exc:
+                _log('Temporäre Wiedergabe-Diagnosedaten konnten nicht vollständig gelöscht werden: %s' % exc, xbmc.LOGWARNING)
+            dialog.notification(ADDON_NAME, _s(32052, 'Diagnostic package saved for a later upload.'), xbmcgui.NOTIFICATION_INFO, 7000)
             return False
         stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
         try:
@@ -1038,23 +1052,41 @@ def _upload_normal_log():
 
 
 def _upload_pending_package(dialog):
-    if not os.path.isfile(PENDING_PACKAGE_PATH):
-        dialog.ok(ADDON_NAME, _s(32055, 'Es ist kein gespeichertes Diagnosepaket vorhanden.'))
-        return False
-    if not dialog.yesno(ADDON_NAME, _s(32056, 'Gespeichertes Diagnosepaket jetzt erneut hochladen?')):
-        return False
     try:
+        pending_paths = []
+        if os.path.isfile(PENDING_PACKAGE_PATH):
+            pending_paths.append(PENDING_PACKAGE_PATH)
+        if os.path.isdir(DIAGNOSTIC_BASE_DIR):
+            for name in sorted(os.listdir(DIAGNOSTIC_BASE_DIR)):
+                if name.startswith('pending-diagnostic-package-') and name.endswith('.zip'):
+                    path = os.path.join(DIAGNOSTIC_BASE_DIR, name)
+                    if os.path.isfile(path) and not os.path.islink(path):
+                        pending_paths.append(path)
+        if not pending_paths:
+            dialog.ok(ADDON_NAME, _s(32055, 'No saved diagnostic package is available.'))
+            return False
+        if len(pending_paths) == 1:
+            package_path = pending_paths[0]
+        else:
+            labels = [os.path.basename(path) for path in pending_paths]
+            selected = dialog.select(ADDON_NAME, labels)
+            if selected < 0:
+                return False
+            package_path = pending_paths[selected]
+        if not dialog.yesno(ADDON_NAME, _s(32056, 'Upload the saved diagnostic package now?')):
+            return False
         stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
-        destination = _github_upload_file(PENDING_PACKAGE_PATH, 'diagnosepaket-%s.zip' % stamp)
-        _remove_diagnostic_data()
+        destination = _github_upload_file(package_path, 'diagnosepaket-%s.zip' % stamp)
+        os.remove(package_path)
         dialog.ok(ADDON_NAME, _s(32024, 'Diagnostic package uploaded.') + '\n\n' + destination)
         return True
     except Exception as exc:
         _log('Erneuter Upload des Diagnosepakets fehlgeschlagen: %s' % exc, xbmc.LOGERROR)
-        dialog.notification(ADDON_NAME, _s(32050, 'Upload fehlgeschlagen.'), xbmcgui.NOTIFICATION_ERROR, 7000)
-        if dialog.yesno(ADDON_NAME, _s(32051, 'Upload fehlgeschlagen. Soll das Diagnosepaket gelöscht werden? Wenn du Nein wählst, bleibt es zum späteren Versuch erhalten.')):
-            _remove_diagnostic_data()
-            dialog.notification(ADDON_NAME, _s(32049, 'Diagnosepaket und temporäre Dateien wurden gelöscht.'), xbmcgui.NOTIFICATION_INFO, 5000)
+        dialog.notification(ADDON_NAME, _s(32050, 'Upload failed.'), xbmcgui.NOTIFICATION_ERROR, 7000)
+        if 'package_path' in locals() and os.path.isfile(package_path):
+            if dialog.yesno(ADDON_NAME, _s(32051, 'Upload failed. Delete the diagnostic package? Choose No to keep it for a later attempt.')):
+                os.remove(package_path)
+                dialog.notification(ADDON_NAME, _s(32049, 'Diagnostic package and temporary files were deleted.'), xbmcgui.NOTIFICATION_INFO, 5000)
         return False
 
 

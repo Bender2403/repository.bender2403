@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Kodi Diag 0.1.2\n"
+"Project-Id-Version: Kodi Diag 0.1.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-09 00:00+0000\n"
 "PO-Revision-Date: 2026-11-09 00:00+0000\n"
@@ -201,8 +201,8 @@ msgid "Diagnostic package created. Do you want to upload it now?"
 msgstr "Diagnostic package created. Do you want to upload it now?"
 
 msgctxt "#32049"
-msgid "Diagnostic package and temporary files were deleted."
-msgstr "Diagnostic package and temporary files were deleted."
+msgid "Diagnostic package deleted."
+msgstr "Diagnostic package deleted."
 
 msgctxt "#32050"
 msgid "Upload failed."
@@ -213,8 +213,8 @@ msgid "Upload failed. Delete the diagnostic package? Choose No to keep it for a 
 msgstr "Upload failed. Delete the diagnostic package? Choose No to keep it for a later attempt."
 
 msgctxt "#32052"
-msgid "Diagnostic package kept for a later upload."
-msgstr "Diagnostic package kept for a later upload."
+msgid "Diagnostic package saved for a later upload."
+msgstr "Diagnostic package saved for a later upload."
 
 msgctxt "#32053"
 msgid "Diagnostic package could not be created. The diagnostic files have been retained."
