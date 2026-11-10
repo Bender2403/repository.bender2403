@@ -56,6 +56,7 @@ REDACTIONS = [
     (re.compile(r'(?i)(\b(?:proxy-authorization|set-cookie|x-api-key|x-auth-token|x-access-token|x-csrf-token|x-xsrf-token|x-drm-token|x-license-token)\s*:\s*)[^\r\n]+'), r'\1[REDACTED]'),
     (re.compile(r'(?i)(\b(?:access_token|refresh_token|token|api[_-]?key|password|passwd|secret|signature|sig|hdnts|jwt|auth|sessionid|session_id|policy|key-pair-id)\b\s*[=:]\s*)["\']?[^\s&"\']+'), r'\1[REDACTED]'),
     (re.compile(r'(?i)([?&](?:access_token|refresh_token|token|api[_-]?key|password|passwd|secret|signature|sig|hdnts?|hdnea|jwt|auth|sessionid|session_id|policy|key-pair-id|expires|x-amz-[a-z-]+|x-goog-[a-z-]+)=)[^&\s"\']+'), r'\1[REDACTED]'),
+    (re.compile(r'(?i)(\b(?:ntlm(?:ssp)?[_ -]?(?:challenge|response)|challenge[_ -]?response)\s*[:=]\s*)[0-9a-f]{16,}'), r'\1[REDACTED]'),
 ]
 
 

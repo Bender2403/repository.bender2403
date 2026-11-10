@@ -248,15 +248,19 @@ def run():
                 xbmc.log('[Kodi Diag] Start der Video-Diagnose fehlgeschlagen: %s' % exc, xbmc.LOGERROR)
 
         def stop_capture(self):
-            if recorder.active:
-                folder = recorder.finish()
-                xbmc.log('[Kodi Diag] Video-Diagnose gespeichert: %s' % os.path.basename(folder or ''), xbmc.LOGINFO)
-            if self.owns_logging_state:
-                try:
-                    loguploader._restore_diagnostics()
-                except Exception as exc:
-                    xbmc.log('[Kodi Diag] Kodi-Logging konnte nicht wiederhergestellt werden: %s' % exc, xbmc.LOGERROR)
-            self.owns_logging_state = False
+            try:
+                if recorder.active:
+                    folder = recorder.finish()
+                    xbmc.log('[Kodi Diag] Video-Diagnose gespeichert: %s' % os.path.basename(folder or ''), xbmc.LOGINFO)
+            except Exception as exc:
+                xbmc.log('[Kodi Diag] Fehler beim Abschließen der Video-Aufzeichnung: %s' % exc, xbmc.LOGERROR)
+            finally:
+                if self.owns_logging_state:
+                    try:
+                        loguploader._restore_diagnostics()
+                    except Exception as exc:
+                        xbmc.log('[Kodi Diag] Kodi-Logging konnte nicht wiederhergestellt werden: %s' % exc, xbmc.LOGERROR)
+                self.owns_logging_state = False
 
         def onAVStarted(self):
             try:
