@@ -131,7 +131,7 @@ def build_system_report(addon_version, kodi_version, android_hint=False):
         'CPU': cpu or UNKNOWN,
     }
     lines = [
-        'Kodi Logfile Uploader Diagnosepaket',
+        'Kodi Diag Diagnosepaket',
         'Add-on-Version: ' + (_clean(addon_version) or UNKNOWN),
     ]
     lines.extend('%s: %s' % item for item in values.items())

@@ -1,5 +1,12 @@
-Kodi Logfile Uploader (GitHub)
+Kodi Diag
 ==============================
+
+Version 0.1.1
+-------------
+- Anzeigename in Kodi auf **Kodi Diag** vereinheitlicht; die bestehende Add-on-ID bleibt für Update-Kompatibilität unverändert.
+- Testmodus-Dateiauswahl auf die Kodi-Dateiendung `.log` abgestimmt; bis zu sechs Dateien aus dem Kodi-Temp-Ordner mit maximal 64 MiB pro Datei.
+- README, Add-on-Metadaten, Sprachdateien und Diagnosebericht auf den Namen Kodi Diag aktualisiert.
+- Englische Fehlermeldung zur maximalen Loggröße auf 64 MiB korrigiert.
 
 Version 0.1.0
 -------------

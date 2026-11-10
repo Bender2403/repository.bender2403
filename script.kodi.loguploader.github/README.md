@@ -1,17 +1,17 @@
-# Kodi-Logdatei-Uploader – eigenständige GitHub-Version
+# Kodi Diag – Kodi-Diagnose und Log-Upload
 
 Diese eigenständige Version basiert auf Ronies Add-on `script.kodi.loguploader` und steht unter der Lizenz GPL-2.0-only. Sie verwendet die eigene Add-on-ID `script.kodi.loguploader.github` und wird deshalb von Kodi getrennt vom Original verwaltet.
 
-**Anzeigename:** Kodi Logfile Uploader (GitHub)  
+**Anzeigename:** Kodi Diag (GitHub)  
 **Add-on-ID:** `script.kodi.loguploader.github`  
-**Version:** `0.1.0`  
+**Version:** `0.1.1`  
 
 **GitHub ist das voreingestellte Upload-Ziel.** Der bisherige Dienst `paste.kodi.tv` bleibt als alternative Upload-Möglichkeit erhalten.
 
 ## Installation in Kodi
 
 1. Lade die ZIP-Datei des Add-ons herunter und installiere sie in Kodi über **Aus ZIP-Datei installieren**. Achte darauf, dass die ZIP-Datei den Add-on-Ordner `script.kodi.loguploader.github` enthält.
-2. Öffne anschließend die Einstellungen des Add-ons **Kodi Logfile Uploader**.
+2. Öffne anschließend die Einstellungen des Add-ons **Kodi Diag**.
 3. Erstelle auf GitHub ein Fine-grained Personal Access Token.
 4. Beschränke das Token auf das Repository `Bender2403/kodi-rakuten-tv-addon`.
 5. Erteile dem Token für dieses Repository die Berechtigung **Contents: Read and write**.

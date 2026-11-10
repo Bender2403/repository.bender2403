@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Kodi Logfile Uploader with optional Kodi-wide diagnostics."""
+"""Kodi Diag with optional Kodi-wide diagnostics."""
 import base64
 import datetime
 import tempfile
@@ -417,7 +417,7 @@ def _select_test_logs(dialog):
         return False
     selected = dialog.browseMultiple(
         1, _s(32057, 'Test-Logdateien aus dem Kodi-Temp-Ordner auswählen'),
-        'files', '*.log', False, False, TEMP_DIR
+        'files', '.log', False, False, TEMP_DIR
     )
     if not selected:
         return False
@@ -749,7 +749,7 @@ def _system_report():
         'Architektur': 'System.Arch',
         'CPU': 'System.CPUModel',
     }
-    lines = ['Kodi Logfile Uploader Diagnosepaket', 'Add-on-Version: ' + ADDON_VERSION]
+    lines = ['Kodi Diag Diagnosepaket', 'Add-on-Version: ' + ADDON_VERSION]
     for label, info in labels.items():
         try:
             value = xbmc.getInfoLabel(info)

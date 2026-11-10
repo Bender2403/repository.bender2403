@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Kodi Logfile Uploader (GitHub) 0.1.0\n"
+"Project-Id-Version: Kodi Diag 0.1.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-09 00:00+0000\n"
 "PO-Revision-Date: 2026-11-09 00:00+0000\n"
@@ -66,8 +66,8 @@ msgid "Restore debug settings"
 msgstr "Restore debug settings"
 
 msgctxt "#32015"
-msgid "Kodi Logfile Uploader"
-msgstr "Kodi Logfile Uploader"
+msgid "Kodi Diag"
+msgstr "Kodi Diag"
 
 msgctxt "#32016"
 msgid "Enable Kodi-wide debug logging?"
@@ -115,7 +115,7 @@ msgstr "Operation failed: {error}"
 
 msgctxt "#32028"
 msgid "kodi.log was not found, is empty or exceeds 64 MiB."
-msgstr "kodi.log was not found, is empty or exceeds 10 MB."
+msgstr "kodi.log was not found, is empty or exceeds 64 MiB."
 
 msgctxt "#32029"
 msgid "Kodi does not expose the global debug switch."
