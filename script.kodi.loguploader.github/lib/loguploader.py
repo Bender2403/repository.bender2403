@@ -40,7 +40,9 @@ PASTE_URL = 'https://paste.kodi.tv/'
 API_ROOT = 'https://api.github.com'
 TIMEOUT = 30
 MAX_LOG_SIZE = 2 * 1024 * 1024
-MAX_LOG_SOURCE_SIZE = 10 * 1024 * 1024
+MAX_LOG_SOURCE_SIZE = 64 * 1024 * 1024
+READ_CHUNK_SIZE = 64 * 1024
+MAX_LOG_LINE_SIZE = 256 * 1024
 MAX_FILTERED_LOG_SIZE = 1536 * 1024
 MAX_OLD_FILTERED_LOG_SIZE = 256 * 1024
 MAX_MANIFEST_SIZE = 1024 * 1024
@@ -95,6 +97,73 @@ def _decode(data):
     return data
 
 
+def _vfs_file_size(path):
+    handle = xbmcvfs.File(path)
+    try:
+        return handle.size()
+    finally:
+        handle.close()
+
+
+def _iter_vfs_lines(path, limit=MAX_LOG_SOURCE_SIZE):
+    """Yield decoded lines with bounded VFS reads and bounded line memory."""
+    if not xbmcvfs.exists(path):
+        raise IOError('Datei nicht gefunden')
+    handle = xbmcvfs.File(path)
+    try:
+        size = handle.size()
+        if size > limit:
+            raise ValueError('Quelldatei überschreitet das Größenlimit (%d Bytes)' % size)
+        decoder = __import__('codecs').getincrementaldecoder('utf-8')('replace')
+        pending = ''
+        dropping = False
+        while True:
+            chunk = handle.readBytes(READ_CHUNK_SIZE)
+            if not chunk:
+                break
+            decoded = decoder.decode(bytes(chunk), final=False)
+            for part in decoded.splitlines(True):
+                if dropping:
+                    if part.endswith(('\n', '\r')):
+                        dropping = False
+                    continue
+                pending += part
+                if len(pending.encode('utf-8')) > MAX_LOG_LINE_SIZE:
+                    pending = ''
+                    dropping = not part.endswith(('\n', '\r'))
+                    _log('Überlange Logzeile ausgelassen: %s' % os.path.basename(path), xbmc.LOGWARNING)
+                elif pending.endswith(('\n', '\r')):
+                    yield pending.rstrip('\r\n')
+                    pending = ''
+        tail = decoder.decode(b'', final=True)
+        if tail and not dropping:
+            pending += tail
+        if pending and len(pending.encode('utf-8')) <= MAX_LOG_LINE_SIZE:
+            yield pending.rstrip('\r\n')
+    finally:
+        handle.close()
+
+
+def _clean_log_line(line):
+    if 'NTLMSSP' in line.upper():
+        return '[REDACTED SMB/NTLMSSP diagnostic data]'
+    for pattern, replacement in REDACTIONS:
+        line = pattern.sub(replacement, line)
+    return line
+
+
+def _iter_clean_protocol_lines(path, http_enabled, drm_enabled, stats):
+    for raw_line in _iter_vfs_lines(path):
+        line = _clean_log_line(raw_line)
+        if not http_enabled and re.search(r'(?:Curl::Debug|HEADER_(?:IN|OUT):|<[^>]*curl[^>]*>)', line, re.I):
+            stats['http_removed'] += 1
+            continue
+        if not drm_enabled and re.search(r'(?:inputstream\.adaptive|AddOnLog:\s*inputstream\.adaptive)', line, re.I):
+            stats['drm_removed'] += 1
+            continue
+        yield line
+
+
 def _read_vfs_file(path, limit):
     if not xbmcvfs.exists(path):
         return None
@@ -113,15 +182,29 @@ def _read_vfs_file(path, limit):
 
 
 def _read_log():
-    content = _read_vfs_file(LOG_FILE, MAX_LOG_SOURCE_SIZE)
-    if not content:
-        raise RuntimeError(_s(32028, 'kodi.log was not found, is empty or exceeds 10 MB.'))
-    sanitized = _clean_log(content)
-    if len(sanitized.encode('utf-8')) <= MAX_LOG_SIZE:
-        return sanitized
-    filtered, stats = logfilter.filter_log(
-        sanitized, _selected_addon_tokens(), MAX_FILTERED_LOG_SIZE
-    )
+    try:
+        source_size = _vfs_file_size(LOG_FILE) if xbmcvfs.exists(LOG_FILE) else 0
+    except Exception:
+        source_size = 0
+    if not source_size:
+        raise RuntimeError(_s(32028, 'kodi.log was not found or is empty.'))
+    if source_size > MAX_LOG_SOURCE_SIZE:
+        raise RuntimeError('kodi.log überschreitet das Quelldateilimit von %d MiB.' % (MAX_LOG_SOURCE_SIZE // (1024 * 1024)))
+    if source_size <= MAX_LOG_SIZE:
+        content = _read_vfs_file(LOG_FILE, MAX_LOG_SOURCE_SIZE)
+        if not content:
+            raise RuntimeError(_s(32028, 'kodi.log was not found or is empty.'))
+        sanitized = _clean_log(content)
+        if len(sanitized.encode('utf-8')) <= MAX_LOG_SIZE:
+            return sanitized
+        filtered, stats = logfilter.filter_log(
+            sanitized, _selected_addon_tokens(), MAX_FILTERED_LOG_SIZE
+        )
+    else:
+        filtered, stats = logfilter.filter_log_stream(
+            (_clean_log_line(line) for line in _iter_vfs_lines(LOG_FILE)),
+            _selected_addon_tokens(), MAX_FILTERED_LOG_SIZE
+        )
     _debug('Großes Kodi-Log gefiltert: %d/%d Zeilen, %d Add-on-Treffer, %d Bytes.' %
         (stats['kept_lines'], stats['total_lines'],
          stats['matched_addon_lines'], stats['output_bytes']))
@@ -385,10 +468,8 @@ def _collect_logs(zf, report):
         names = os.listdir(LOG_DIR)
     except Exception:
         names = ['kodi.log']
-    candidates = []
-    for name in names:
-        if re.match(r'^kodi(?:\.old(?:\(\d+\))?)?\.log$', name, re.I):
-            candidates.append(name)
+    candidates = [name for name in names
+                  if re.match(r'^kodi(?:\\.old(?:\\(\\d+\\))?)?\\.log$', name, re.I)]
     if 'kodi.log' not in candidates:
         candidates.append('kodi.log')
 
@@ -403,52 +484,51 @@ def _collect_logs(zf, report):
     for name in sorted(set(candidates))[:6]:
         path = os.path.join(LOG_DIR, name)
         try:
-            content = _read_vfs_file(path, MAX_LOG_SOURCE_SIZE)
-            if not content:
-                report.append('Log ausgelassen oder leer/zu groß: ' + name)
+            size = _vfs_file_size(path) if xbmcvfs.exists(path) else 0
+            if size <= 0:
+                report.append('Log ausgelassen oder leer: ' + name)
                 continue
-
-            sanitized = _clean_log(content)
-            protocol_content, protocol_stats = logfilter.filter_protocol_logs(
-                sanitized,
-                http_enabled=_setting_enabled('http_logging'),
-                drm_enabled=_setting_enabled('drm_logging'),
-            )
-            sanitized = protocol_content
-            if protocol_stats['http_removed'] or protocol_stats['drm_removed']:
-                report.append(
-                    'Protokollzeilen gemäß Add-on-Einstellungen ausgelassen: HTTP/HTTPS=%d, DRM=%d' %
-                    (protocol_stats['http_removed'], protocol_stats['drm_removed'])
-                )
-            source_bytes = sanitized.encode('utf-8')
-            if len(source_bytes) <= MAX_LOG_SIZE:
-                zf.writestr('logs/' + name, source_bytes)
-                report.append('Log aufgenommen: %s (bereinigtes Original)' % name)
+            if size > MAX_LOG_SOURCE_SIZE:
+                report.append('Log ausgelassen (Quelldatei größer als %d MiB): %s' %
+                              (MAX_LOG_SOURCE_SIZE // (1024 * 1024), name))
+                continue
+            filter_limit = MAX_FILTERED_LOG_SIZE if name.lower() == 'kodi.log' else MAX_OLD_FILTERED_LOG_SIZE
+            if size <= MAX_LOG_SIZE:
+                content = _read_vfs_file(path, MAX_LOG_SOURCE_SIZE) or ''
+                sanitized = _clean_log(content)
+                protocol_content, protocol_stats = logfilter.filter_protocol_logs(
+                    sanitized, http_enabled=_setting_enabled('http_logging'),
+                    drm_enabled=_setting_enabled('drm_logging'))
+                sanitized = protocol_content
+                if protocol_stats['http_removed'] or protocol_stats['drm_removed']:
+                    report.append('Protokollzeilen gemäß Add-on-Einstellungen ausgelassen: HTTP/HTTPS=%d, DRM=%d' %
+                                  (protocol_stats['http_removed'], protocol_stats['drm_removed']))
+                source_bytes = sanitized.encode('utf-8')
+                if len(source_bytes) <= MAX_LOG_SIZE:
+                    zf.writestr('logs/' + name, source_bytes)
+                    report.append('Log aufgenommen: %s (bereinigtes Original)' % name)
+                filtered, stats = logfilter.filter_log(sanitized, addon_tokens, filter_limit)
             else:
-                report.append(
-                    'Log aufgenommen: %s (Original mit %d Bytes wegen Größenlimit nicht beigelegt)' %
-                    (name, len(source_bytes))
-                )
-
-            filter_limit = (MAX_FILTERED_LOG_SIZE if name.lower() == 'kodi.log'
-                            else MAX_OLD_FILTERED_LOG_SIZE)
-            filtered, stats = logfilter.filter_log(
-                sanitized, addon_tokens, filter_limit
-            )
+                protocol_stats = {'http_removed': 0, 'drm_removed': 0}
+                filtered, stats = logfilter.filter_log_stream(
+                    _iter_clean_protocol_lines(path, _setting_enabled('http_logging'),
+                                               _setting_enabled('drm_logging'), protocol_stats),
+                    addon_tokens, filter_limit)
+                report.append('Log aufgenommen: %s (bereinigtes Original wegen Größenlimit nicht beigelegt)' % name)
+                if protocol_stats['http_removed'] or protocol_stats['drm_removed']:
+                    report.append('Protokollzeilen gemäß Add-on-Einstellungen ausgelassen: HTTP/HTTPS=%d, DRM=%d' %
+                                  (protocol_stats['http_removed'], protocol_stats['drm_removed']))
             _debug('%s: %d/%d Zeilen behalten; %d Add-on-Treffer; %d Bytes.' %
                    (name, stats['kept_lines'], stats['total_lines'],
                     stats['matched_addon_lines'], stats['output_bytes']))
             if filtered:
                 filtered_name = 'filtered-' + name
                 zf.writestr('logs/' + filtered_name, filtered.encode('utf-8'))
-                report.append(
-                    'Log aufgenommen: %s; %d/%d Zeilen behalten, %d Add-on-Treffer, %d Bytes' %
-                    (filtered_name, stats['kept_lines'], stats['total_lines'],
-                     stats['matched_addon_lines'], stats['output_bytes'])
-                )
+                report.append('Log aufgenommen: %s; %d/%d Zeilen behalten, %d Add-on-Treffer, %d Bytes' %
+                              (filtered_name, stats['kept_lines'], stats['total_lines'],
+                               stats['matched_addon_lines'], stats['output_bytes']))
         except Exception as exc:
             report.append('Log ausgelassen: %s (%s)' % (name, exc))
-
 
 
 def _collect_playback_sessions(zf, report):

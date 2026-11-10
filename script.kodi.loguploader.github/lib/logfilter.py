@@ -132,6 +132,101 @@ def filter_log(content, addon_tokens=None, max_output_bytes=2 * 1024 * 1024,
 
 
 
+
+def filter_log_stream(lines, addon_tokens=None, max_output_bytes=2 * 1024 * 1024,
+                      context_lines=3):
+    """Filter a line iterator while bounding retained candidates by output size."""
+    addon_tokens = addon_tokens or []
+    header = '[Kodi-Logfilter: gefilterter Auszug; Fehler und ausgewählte Add-ons werden bevorzugt; Heuristik, kein vollständiges Original]\n'
+    budget = max(0, int(max_output_bytes) - len(header.encode('utf-8')))
+    candidates = {}
+    max_candidate_lines = 20000
+    bucket_bytes = {1: 0, 2: 0, 3: 0}
+    ring = []
+    pending_context = 0
+    traceback_active = False
+    total_lines = 0
+    matched_addon_lines = 0
+    recent = []
+
+    def add(index, line, priority):
+        old = candidates.get(index)
+        if old and old[0] >= priority:
+            return
+        if old is None and len(candidates) >= max_candidate_lines:
+            return
+        encoded_size = len((line + '\n').encode('utf-8', 'replace'))
+        previous_size = len((old[1] + '\n').encode('utf-8', 'replace')) if old else 0
+        available = bucket_bytes[priority]
+        if encoded_size <= budget and available + encoded_size <= budget:
+            if old:
+                bucket_bytes[old[0]] -= previous_size
+            candidates[index] = (priority, line)
+            bucket_bytes[priority] += encoded_size
+
+    for raw in lines:
+        line = raw.rstrip('\r\n')
+        total_lines += 1
+        recent.append((total_lines - 1, line))
+        if len(recent) > 100:
+            recent.pop(0)
+        priority = _priority(line, addon_tokens)
+        if _matches_addon(line, addon_tokens):
+            matched_addon_lines += 1
+        if priority:
+            for previous_index, previous in ring:
+                add(previous_index, previous, 1)
+            add(total_lines - 1, line, priority)
+            pending_context = context_lines
+        elif pending_context:
+            add(total_lines - 1, line, 1)
+            pending_context -= 1
+        if _TRACEBACK_START.search(line):
+            traceback_active = True
+            add(total_lines - 1, line, 3)
+        elif traceback_active:
+            if line.strip() and not line[:1].isspace() and not _ERROR.search(line):
+                traceback_active = False
+            else:
+                add(total_lines - 1, line, 3)
+        ring.append((total_lines - 1, line))
+        if len(ring) > context_lines:
+            ring.pop(0)
+
+    if not candidates and total_lines:
+        for index, line in recent:
+            encoded_size = len((line + '\n').encode('utf-8', 'replace'))
+            if bucket_bytes[1] + encoded_size > budget:
+                break
+            candidates[index] = (1, line)
+            bucket_bytes[1] += encoded_size
+
+    selected = []
+    used = 0
+    for priority in (3, 2, 1):
+        for index in sorted(candidates):
+            candidate_priority, line = candidates[index]
+            if candidate_priority != priority:
+                continue
+            encoded_size = len((line + '\n').encode('utf-8', 'replace'))
+            if used + encoded_size <= budget:
+                selected.append((index, line, priority))
+                used += encoded_size
+    selected.sort(key=lambda item: item[0])
+    collapsed = _collapse_repeats([(line, priority) for _, line, priority in selected])
+    output = header + ('\n'.join(collapsed) + '\n' if collapsed else '')
+    encoded = output.encode('utf-8', 'replace')
+    if len(encoded) > max_output_bytes:
+        output = encoded[:max_output_bytes].decode('utf-8', 'ignore')
+    return output, {
+        'total_lines': total_lines,
+        'kept_lines': len(selected),
+        'removed_lines': max(0, total_lines - len(selected)),
+        'output_bytes': len(output.encode('utf-8')),
+        'matched_addon_lines': matched_addon_lines,
+    }
+
+
 def filter_protocol_logs(content, http_enabled=True, drm_enabled=True):
     """Remove protocol-specific debug lines disabled in the add-on settings.
 
