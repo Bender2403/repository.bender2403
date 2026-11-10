@@ -80,7 +80,7 @@ def _clean_log(content):
     cleaned = []
     for line in content.splitlines(True):
         if 'NTLMSSP' in line.upper():
-            cleaned.append('[REDACTED SMB/NTLMSSP diagnostic data]' + ('\\n' if line.endswith(('\\n', '\\r')) else ''))
+            cleaned.append('[REDACTED SMB/NTLMSSP diagnostic data]' + ('\n' if line.endswith(('\n', '\r')) else ''))
             continue
         for pattern, replacement in REDACTIONS:
             line = pattern.sub(replacement, line)
@@ -748,7 +748,7 @@ def _upload_pending_package(dialog):
         stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
         destination = _github_upload_file(PENDING_PACKAGE_PATH, 'diagnosepaket-%s.zip' % stamp)
         _remove_diagnostic_data()
-        dialog.ok(ADDON_NAME, _s(32024, 'Diagnostic package uploaded.') + '\\n\\n' + destination)
+        dialog.ok(ADDON_NAME, _s(32024, 'Diagnostic package uploaded.') + '\n\n' + destination)
         return True
     except Exception as exc:
         _log('Erneuter Upload des Diagnosepakets fehlgeschlagen: %s' % exc, xbmc.LOGERROR)
