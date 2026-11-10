@@ -737,6 +737,28 @@ def _upload_normal_log():
     return destination
 
 
+
+def _upload_pending_package(dialog):
+    if not os.path.isfile(PENDING_PACKAGE_PATH):
+        dialog.ok(ADDON_NAME, _s(32055, 'Es ist kein gespeichertes Diagnosepaket vorhanden.'))
+        return False
+    if not dialog.yesno(ADDON_NAME, _s(32056, 'Gespeichertes Diagnosepaket jetzt erneut hochladen?')):
+        return False
+    try:
+        stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        destination = _github_upload_file(PENDING_PACKAGE_PATH, 'diagnosepaket-%s.zip' % stamp)
+        _remove_diagnostic_data()
+        dialog.ok(ADDON_NAME, _s(32024, 'Diagnostic package uploaded.') + '\\n\\n' + destination)
+        return True
+    except Exception as exc:
+        _log('Erneuter Upload des Diagnosepakets fehlgeschlagen: %s' % exc, xbmc.LOGERROR)
+        dialog.notification(ADDON_NAME, _s(32050, 'Upload fehlgeschlagen.'), xbmcgui.NOTIFICATION_ERROR, 7000)
+        if dialog.yesno(ADDON_NAME, _s(32051, 'Upload fehlgeschlagen. Soll das Diagnosepaket gelöscht werden? Wenn du Nein wählst, bleibt es zum späteren Versuch erhalten.')):
+            _remove_diagnostic_data()
+            dialog.notification(ADDON_NAME, _s(32049, 'Diagnosepaket und temporäre Dateien wurden gelöscht.'), xbmcgui.NOTIFICATION_INFO, 5000)
+        return False
+
+
 def _upload_diagnostic_package(dialog):
     return _offer_diagnostic_upload(dialog)
 
@@ -749,6 +771,7 @@ def main():
         _s(32013, 'Create and upload diagnostic package'),
         _s(32014, 'Restore debug settings'),
         _s(32034, 'Select add-ons to prioritize in logs'),
+        _s(32054, 'Gespeichertes Diagnosepaket erneut hochladen'),
     ]
     try:
         _debug('Uploader gestartet; Add-on-Version %s.' % ADDON_VERSION)
@@ -774,6 +797,8 @@ def main():
         elif choice == 3:
             restored = _restore_diagnostics()
             dialog.ok(ADDON_NAME, _s(32025, 'The original Kodi logging settings have been restored.') if restored else _s(32026, 'There is no active diagnostic session.'))
+        elif choice == 5:
+            _upload_pending_package(dialog)
     except Exception as exc:
         _log('Vorgang fehlgeschlagen: %s' % exc, xbmc.LOGERROR)
         dialog.ok(ADDON_NAME, _s(32027, 'Operation failed: {error}').format(error=str(exc)))

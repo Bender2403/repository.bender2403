@@ -6,7 +6,7 @@ Version 0.0.9
 - Optionalen automatischen Diagnosemodus ergänzt: Video-/Stream-Wiedergaben werden getrennt aufgezeichnet; Musik wird ignoriert. Die Diagnose startet bei der Wiedergabe und endet mit ihr.
 - Beim Ausschalten wird sofort ein Diagnosepaket erstellt und vor dem Upload eine Bestätigung abgefragt. Bei Ablehnung werden die Dateien gelöscht; nach fehlgeschlagenem Upload kann das Paket behalten oder gelöscht werden.
 - Wiedergabe-Logs werden blockweise und speicherschonend erfasst. SMB-/NTLMSSP-Diagnosezeilen werden maskiert; CDM-Dateien und rohe Lizenzdaten werden nicht gesammelt.
-- Versionsnummer erhöht, damit Kodi die aktualisierten Add-on-Metadaten und die bereits in Version 0.0.8 ergänzten HTTP-/HTTPS- und DRM-Einstellungen als neues Update erkennt. Keine zusätzliche Funktionsänderung gegenüber Version 0.0.8.
+- Historische Versionsanhebung zur Übernahme der HTTP-/HTTPS- und DRM-Einstellungen aus Version 0.0.8; die hier ergänzten Diagnosefunktionen wurden unter derselben Add-on-Versionsnummer nachgetragen.
 
 Version 0.0.8
 -------------

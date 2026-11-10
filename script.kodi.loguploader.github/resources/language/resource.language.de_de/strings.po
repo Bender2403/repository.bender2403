@@ -219,3 +219,16 @@ msgstr "Diagnosepaket bleibt für einen späteren Upload gespeichert."
 msgctxt "#32053"
 msgid "Diagnosepaket konnte nicht erstellt werden. Die Diagnose-Dateien bleiben erhalten."
 msgstr "Diagnosepaket konnte nicht erstellt werden. Die Diagnose-Dateien bleiben erhalten."
+
+
+msgctxt "#32054"
+msgid "Gespeichertes Diagnosepaket erneut hochladen"
+msgstr "Gespeichertes Diagnosepaket erneut hochladen"
+
+msgctxt "#32055"
+msgid "Es ist kein gespeichertes Diagnosepaket vorhanden."
+msgstr "Es ist kein gespeichertes Diagnosepaket vorhanden."
+
+msgctxt "#32056"
+msgid "Gespeichertes Diagnosepaket jetzt erneut hochladen?"
+msgstr "Gespeichertes Diagnosepaket jetzt erneut hochladen?"

@@ -219,3 +219,16 @@ msgstr "Diagnostic package kept for a later upload."
 msgctxt "#32053"
 msgid "Diagnostic package could not be created. The diagnostic files have been retained."
 msgstr "Diagnostic package could not be created. The diagnostic files have been retained."
+
+
+msgctxt "#32054"
+msgid "Retry upload of saved diagnostic package"
+msgstr "Retry upload of saved diagnostic package"
+
+msgctxt "#32055"
+msgid "No saved diagnostic package is available."
+msgstr "No saved diagnostic package is available."
+
+msgctxt "#32056"
+msgid "Upload the saved diagnostic package now?"
+msgstr "Upload the saved diagnostic package now?"
