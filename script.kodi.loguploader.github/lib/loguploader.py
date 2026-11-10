@@ -6,6 +6,7 @@ import tempfile
 import json
 import os
 import re
+import shutil
 import zipfile
 
 import requests
@@ -29,6 +30,9 @@ ADDON_VERSION = ADDON.getAddonInfo('version')
 LOG_DIR = xbmcvfs.translatePath('special://logpath')
 LOG_FILE = os.path.join(LOG_DIR, 'kodi.log')
 TEMP_DIR = xbmcvfs.translatePath('special://temp')
+DIAGNOSTIC_BASE_DIR = os.path.join(TEMP_DIR, 'kodi_loguploader')
+DIAGNOSTIC_PLAYBACK_DIR = os.path.join(DIAGNOSTIC_BASE_DIR, 'diagnose')
+PENDING_PACKAGE_PATH = os.path.join(DIAGNOSTIC_BASE_DIR, 'pending-diagnostic-package.zip')
 PROFILE_DIR = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
 STATE_FILE = os.path.join(PROFILE_DIR, 'diagnostic_state.json')
 ADDON_SELECTION_FILE = os.path.join(PROFILE_DIR, 'selected_addons.json')
@@ -72,9 +76,16 @@ def _debug(message):
 
 
 def _clean_log(content):
-    for pattern, replacement in REDACTIONS:
-        content = pattern.sub(replacement, content)
-    return content
+    """Redact credentials and sensitive SMB/NTLMSSP diagnostics."""
+    cleaned = []
+    for line in content.splitlines(True):
+        if 'NTLMSSP' in line.upper():
+            cleaned.append('[REDACTED SMB/NTLMSSP diagnostic data]' + ('\\n' if line.endswith(('\\n', '\\r')) else ''))
+            continue
+        for pattern, replacement in REDACTIONS:
+            line = pattern.sub(replacement, line)
+        cleaned.append(line)
+    return ''.join(cleaned)
 
 
 def _decode(data):
@@ -289,8 +300,9 @@ def _start_diagnostics(dialog):
     drm_enabled = _setting_enabled('drm_logging')
     state = _load_state()
     if state:
-        dialog.ok(ADDON_NAME, _s(32018, 'A diagnostic session is already active. After reproducing the issue, create the diagnostic package or restore the settings.'))
-        return
+        if dialog is not None:
+            dialog.ok(ADDON_NAME, _s(32018, 'A diagnostic session is already active. After reproducing the issue, create the diagnostic package or restore the settings.'))
+        return False
 
     original_debug = _get_debug_state()
     state = {
@@ -341,7 +353,9 @@ def _start_diagnostics(dialog):
         if drm_enabled:
             enabled.append('DRM / InputStream Adaptive')
         detail = 'Aktiviert: ' + ', '.join(enabled)
-    dialog.ok(ADDON_NAME, _s(32019, 'Diagnostic mode is active.') + '\n\n' + detail + '\n\n' + _s(32020, 'Reproduce the issue now. Then start this add-on again and choose the diagnostic package option.'))
+    if dialog is not None:
+        dialog.ok(ADDON_NAME, _s(32019, 'Diagnostic mode is active.') + '\n\n' + detail + '\n\n' + _s(32020, 'Reproduce the issue now. Then start this add-on again and choose the diagnostic package option.'))
+    return True
 
 
 def _restore_diagnostics():
@@ -435,6 +449,116 @@ def _collect_logs(zf, report):
             report.append('Log ausgelassen: %s (%s)' % (name, exc))
 
 
+
+def _collect_playback_sessions(zf, report):
+    """Add sanitized per-video capture files without loading them into RAM."""
+    if not os.path.isdir(DIAGNOSTIC_PLAYBACK_DIR):
+        return
+    total_bytes = 0
+    for session in sorted(os.listdir(DIAGNOSTIC_PLAYBACK_DIR)):
+        folder = os.path.join(DIAGNOSTIC_PLAYBACK_DIR, session)
+        if not os.path.isdir(folder) or os.path.islink(folder):
+            continue
+        try:
+            names = sorted(os.listdir(folder))
+        except Exception:
+            continue
+        for name in names:
+            if name != 'kodi.log' and name != 'capture-info.txt' and not name.lower().endswith(('.mpd', '.m3u8')):
+                continue
+            path = os.path.join(folder, name)
+            if os.path.islink(path) or not os.path.isfile(path):
+                continue
+            try:
+                size = os.path.getsize(path)
+                limit = 8 * 1024 * 1024 if name == 'kodi.log' else MAX_MANIFEST_SIZE
+                if size <= 0 or size > limit or total_bytes + size > 12 * 1024 * 1024:
+                    report.append('Wiedergabe-Datei ausgelassen (Größenlimit): %s/%s' % (session, name))
+                    continue
+                zf.write(path, 'playbacks/%s/%s' % (session, name))
+                total_bytes += size
+                report.append('Wiedergabe-Datei aufgenommen: %s/%s (%d Bytes)' % (session, name, size))
+            except Exception as exc:
+                report.append('Wiedergabe-Datei ausgelassen: %s/%s (%s)' % (session, name, exc))
+
+
+def _remove_diagnostic_data():
+    try:
+        if os.path.isdir(DIAGNOSTIC_PLAYBACK_DIR):
+            shutil.rmtree(DIAGNOSTIC_PLAYBACK_DIR)
+    except Exception as exc:
+        _log('Diagnoseordner konnte nicht vollständig gelöscht werden: %s' % exc, xbmc.LOGWARNING)
+    try:
+        if os.path.exists(PENDING_PACKAGE_PATH):
+            os.remove(PENDING_PACKAGE_PATH)
+    except Exception as exc:
+        _log('Gespeichertes Diagnosepaket konnte nicht gelöscht werden: %s' % exc, xbmc.LOGWARNING)
+
+
+def _offer_diagnostic_upload(dialog):
+    restored = _restore_diagnostics()
+    package_path = _build_diagnostic_package()
+    try:
+        if not dialog.yesno(ADDON_NAME, _s(32048, 'Diagnosepaket wurde erstellt. Möchtest du es jetzt hochladen?')):
+            os.remove(package_path)
+            _remove_diagnostic_data()
+            dialog.notification(ADDON_NAME, _s(32049, 'Diagnosepaket und temporäre Dateien wurden gelöscht.'), xbmcgui.NOTIFICATION_INFO, 5000)
+            return False
+        stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        try:
+            destination = _github_upload_file(package_path, 'diagnosepaket-%s.zip' % stamp)
+        except Exception as exc:
+            _log('Diagnosepaket-Upload fehlgeschlagen: %s' % exc, xbmc.LOGERROR)
+            dialog.notification(ADDON_NAME, _s(32050, 'Upload fehlgeschlagen.'), xbmcgui.NOTIFICATION_ERROR, 7000)
+            if dialog.yesno(ADDON_NAME, _s(32051, 'Upload fehlgeschlagen. Soll das Diagnosepaket gelöscht werden? Wenn du Nein wählst, bleibt es zum späteren Versuch erhalten.')):
+                os.remove(package_path)
+                _remove_diagnostic_data()
+                dialog.notification(ADDON_NAME, _s(32049, 'Diagnosepaket und temporäre Dateien wurden gelöscht.'), xbmcgui.NOTIFICATION_INFO, 5000)
+            else:
+                if not os.path.isdir(DIAGNOSTIC_BASE_DIR):
+                    os.makedirs(DIAGNOSTIC_BASE_DIR)
+                if os.path.exists(PENDING_PACKAGE_PATH):
+                    os.remove(PENDING_PACKAGE_PATH)
+                os.replace(package_path, PENDING_PACKAGE_PATH)
+                dialog.notification(ADDON_NAME, _s(32052, 'Diagnosepaket bleibt für einen späteren Upload gespeichert.'), xbmcgui.NOTIFICATION_INFO, 7000)
+            return False
+        try:
+            os.remove(package_path)
+        except OSError:
+            pass
+        _remove_diagnostic_data()
+        note = _s(32023, 'The original Kodi logging settings have been restored.') + '\n\n' if restored else ''
+        dialog.ok(ADDON_NAME, note + _s(32024, 'Diagnostic package uploaded.') + '\n\n' + destination)
+        return True
+    except Exception:
+        try:
+            if os.path.exists(package_path):
+                os.remove(package_path)
+        except OSError:
+            pass
+        raise
+
+
+def finish_automatic_diagnostics():
+    """Build the final package and ask for upload immediately after disabling the setting."""
+    try:
+        if not os.path.isdir(DIAGNOSTIC_PLAYBACK_DIR):
+            return False
+        sessions = [name for name in os.listdir(DIAGNOSTIC_PLAYBACK_DIR)
+                    if os.path.isdir(os.path.join(DIAGNOSTIC_PLAYBACK_DIR, name))]
+        if not sessions:
+            return False
+        _offer_diagnostic_upload(xbmcgui.Dialog())
+        return True
+    except Exception as exc:
+        _log('Automatisches Diagnosepaket konnte nicht erstellt werden: %s' % exc, xbmc.LOGERROR)
+        try:
+            xbmcgui.Dialog().notification(ADDON_NAME, _s(32053, 'Diagnosepaket konnte nicht erstellt werden. Die Diagnose-Dateien bleiben erhalten.'), xbmcgui.NOTIFICATION_ERROR, 7000)
+        except Exception:
+            pass
+        return False
+
+
 def _collect_manifests(zf, report):
     count = 0
     total = 0
@@ -507,6 +631,7 @@ def _build_diagnostic_package():
             package_path, 'w', zipfile.ZIP_DEFLATED, allowZip64=True
         ) as archive:
             _collect_logs(archive, report)
+            _collect_playback_sessions(archive, report)
             _collect_manifests(archive, report)
             _add_text(archive, 'system-info.txt', _system_report())
             _add_text(archive, 'package-report.txt', '\n'.join(report))
@@ -612,21 +737,8 @@ def _upload_normal_log():
     return destination
 
 
-def _upload_diagnostic_package():
-    # Restore the original Kodi logging state before collecting and uploading.
-    restored = _restore_diagnostics()
-    package_path = _build_diagnostic_package()
-    stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
-    try:
-        destination = _github_upload_file(
-            package_path, 'diagnosepaket-%s.zip' % stamp
-        )
-    finally:
-        try:
-            os.remove(package_path)
-        except OSError:
-            pass
-    return destination, restored
+def _upload_diagnostic_package(dialog):
+    return _offer_diagnostic_upload(dialog)
 
 
 def main():
@@ -658,10 +770,7 @@ def main():
         elif choice == 1:
             _start_diagnostics(dialog)
         elif choice == 2:
-            destination, restored = _upload_diagnostic_package()
-            note = _s(32023, 'The original Kodi logging settings have been restored.') + '\n\n' if restored else ''
-            _log('Diagnosepaket erfolgreich hochgeladen: %s' % destination)
-            dialog.ok(ADDON_NAME, note + _s(32024, 'Diagnostic package uploaded.') + '\n\n' + destination)
+            _upload_diagnostic_package(dialog)
         elif choice == 3:
             restored = _restore_diagnostics()
             dialog.ok(ADDON_NAME, _s(32025, 'The original Kodi logging settings have been restored.') if restored else _s(32026, 'There is no active diagnostic session.'))

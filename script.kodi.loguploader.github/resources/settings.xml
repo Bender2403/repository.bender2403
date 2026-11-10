@@ -34,6 +34,13 @@
           <control type="toggle"/>
         </setting>
       </group>
+      <group id="automatic_diagnostics" label="32045">
+        <setting id="auto_diagnostics" type="boolean" label="32046">
+          <default>false</default>
+          <help>32047</help>
+          <control type="toggle"/>
+        </setting>
+      </group>
       <group id="protocol_logging" label="32040">
         <setting id="http_logging" type="boolean" label="32041">
           <default>false</default>

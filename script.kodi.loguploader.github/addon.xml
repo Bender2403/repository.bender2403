@@ -5,6 +5,7 @@
     <import addon="script.module.requests" version="2.22.0+matrix.1"/>
   </requires>
   <extension point="xbmc.python.script" library="default.py"><provides>executable</provides></extension>
+  <extension point="xbmc.service" library="service.py"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="de_DE">Lädt Kodi-Logs zu GitHub oder paste.kodi.tv und Diagnosepakete zu GitHub hoch.</summary>
     <description lang="de_DE">Kodi Logfile Uploader mit eigenständiger Debug-Protokollierung, Add-on-Auswahl und Diagnosepaketen mit bereinigten und gefilterten Logs sowie HLS-/DASH-Manifesten.</description>

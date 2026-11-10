@@ -182,3 +182,40 @@ msgstr "DRM-Protokollierung aktivieren"
 msgctxt "#32044"
 msgid "Erfasst Debug-Meldungen von InputStream Adaptive, darunter Widevine-Sitzungs- und Lizenzereignisse. Es werden keine rohen Lizenz-Challenges oder Lizenzantworten gesammelt."
 msgstr "Erfasst Debug-Meldungen von InputStream Adaptive, darunter Widevine-Sitzungs- und Lizenzereignisse. Es werden keine rohen Lizenz-Challenges oder Lizenzantworten gesammelt."
+
+
+msgctxt "#32045"
+msgid "Automatische Diagnose"
+msgstr "Automatische Diagnose"
+
+msgctxt "#32046"
+msgid "Diagnosemodus bei Video-/Stream-Wiedergabe"
+msgstr "Diagnosemodus bei Video-/Stream-Wiedergabe"
+
+msgctxt "#32047"
+msgid "Erfasst Video- und Stream-Wiedergaben automatisch getrennt. Musik wird ignoriert. Beim Ausschalten wird sofort ein Diagnosepaket erstellt und vor dem Upload nachgefragt."
+msgstr "Erfasst Video- und Stream-Wiedergaben automatisch getrennt. Musik wird ignoriert. Beim Ausschalten wird sofort ein Diagnosepaket erstellt und vor dem Upload nachgefragt."
+
+msgctxt "#32048"
+msgid "Diagnosepaket wurde erstellt. Möchtest du es jetzt hochladen?"
+msgstr "Diagnosepaket wurde erstellt. Möchtest du es jetzt hochladen?"
+
+msgctxt "#32049"
+msgid "Diagnosepaket und temporäre Dateien wurden gelöscht."
+msgstr "Diagnosepaket und temporäre Dateien wurden gelöscht."
+
+msgctxt "#32050"
+msgid "Upload fehlgeschlagen."
+msgstr "Upload fehlgeschlagen."
+
+msgctxt "#32051"
+msgid "Upload fehlgeschlagen. Soll das Diagnosepaket gelöscht werden? Wenn du Nein wählst, bleibt es zum späteren Versuch erhalten."
+msgstr "Upload fehlgeschlagen. Soll das Diagnosepaket gelöscht werden? Wenn du Nein wählst, bleibt es zum späteren Versuch erhalten."
+
+msgctxt "#32052"
+msgid "Diagnosepaket bleibt für einen späteren Upload gespeichert."
+msgstr "Diagnosepaket bleibt für einen späteren Upload gespeichert."
+
+msgctxt "#32053"
+msgid "Diagnosepaket konnte nicht erstellt werden. Die Diagnose-Dateien bleiben erhalten."
+msgstr "Diagnosepaket konnte nicht erstellt werden. Die Diagnose-Dateien bleiben erhalten."

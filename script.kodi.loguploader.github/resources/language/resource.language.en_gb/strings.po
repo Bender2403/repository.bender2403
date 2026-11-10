@@ -182,3 +182,40 @@ msgstr "Enable DRM logging"
 msgctxt "#32044"
 msgid "Captures InputStream Adaptive debug messages, including Widevine session and license events. Raw license challenges and responses are not collected."
 msgstr "Captures InputStream Adaptive debug messages, including Widevine session and license events. Raw license challenges and responses are not collected."
+
+
+msgctxt "#32045"
+msgid "Automatic diagnostics"
+msgstr "Automatic diagnostics"
+
+msgctxt "#32046"
+msgid "Diagnostics during video/stream playback"
+msgstr "Diagnostics during video/stream playback"
+
+msgctxt "#32047"
+msgid "Automatically records each video or stream separately. Music is ignored. Turning this off immediately creates a diagnostic package and asks before uploading."
+msgstr "Automatically records each video or stream separately. Music is ignored. Turning this off immediately creates a diagnostic package and asks before uploading."
+
+msgctxt "#32048"
+msgid "Diagnostic package created. Do you want to upload it now?"
+msgstr "Diagnostic package created. Do you want to upload it now?"
+
+msgctxt "#32049"
+msgid "Diagnostic package and temporary files were deleted."
+msgstr "Diagnostic package and temporary files were deleted."
+
+msgctxt "#32050"
+msgid "Upload failed."
+msgstr "Upload failed."
+
+msgctxt "#32051"
+msgid "Upload failed. Delete the diagnostic package? Choose No to keep it for a later attempt."
+msgstr "Upload failed. Delete the diagnostic package? Choose No to keep it for a later attempt."
+
+msgctxt "#32052"
+msgid "Diagnostic package kept for a later upload."
+msgstr "Diagnostic package kept for a later upload."
+
+msgctxt "#32053"
+msgid "Diagnostic package could not be created. The diagnostic files have been retained."
+msgstr "Diagnostic package could not be created. The diagnostic files have been retained."
