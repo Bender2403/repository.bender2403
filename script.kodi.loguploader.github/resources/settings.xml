@@ -53,6 +53,13 @@
           <control type="toggle"/>
         </setting>
       </group>
+      <group id="test_mode" label="32058">
+        <setting id="test_mode" type="boolean" label="32059">
+          <default>false</default>
+          <help>32060</help>
+          <control type="toggle"/>
+        </setting>
+      </group>
     </category>
     <category id="expert" label="32008">
       <group id="authentication" label="32010">

@@ -232,3 +232,28 @@ msgstr "No saved diagnostic package is available."
 msgctxt "#32056"
 msgid "Upload the saved diagnostic package now?"
 msgstr "Upload the saved diagnostic package now?"
+
+msgctxt "#32057"
+msgid "Select test log files from Kodi temp folder"
+msgstr "Select test log files from Kodi temp folder"
+
+msgctxt "#32058"
+msgid "Test mode"
+msgstr "Test mode"
+
+msgctxt "#32059"
+msgid "Enable test mode for log files"
+msgstr "Enable test mode for log files"
+
+msgctxt "#32060"
+msgid "When enabled, selected .log files in Kodi's temp folder replace the normal Kodi logs for processing. Up to six files of 64 MiB each are supported. Original files are not modified."
+msgstr "When enabled, selected .log files in Kodi's temp folder replace the normal Kodi logs for processing. Up to six files of 64 MiB each are supported. Original files are not modified."
+
+msgctxt "#32061"
+msgid "No valid .log files were selected from Kodi's temp folder. Files must exist and be no larger than 64 MiB."
+msgstr "No valid .log files were selected from Kodi's temp folder. Files must exist and be no larger than 64 MiB."
+
+msgctxt "#32062"
+msgid "{count} test log files selected. They will be processed instead of the normal Kodi logs."
+msgstr "{count} test log files selected. They will be processed instead of the normal Kodi logs."
+

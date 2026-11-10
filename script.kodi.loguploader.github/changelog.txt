@@ -3,8 +3,11 @@ Kodi Logfile Uploader (GitHub)
 
 Version 0.1.0
 -------------
+- Optionalen Testmodus ergänzt (standardmäßig deaktiviert): bis zu sechs .log-Dateien aus dem Kodi-Temp-Ordner auswählen und wie normale Kodi-Logs verarbeiten.
+- Im Testmodus ersetzen die ausgewählten Dateien die normalen Kodi-Logs sowohl beim normalen Log-Upload als auch bei der Erstellung eines Diagnosepakets; Originaldateien bleiben unverändert.
+- Testdateien werden auf den Kodi-Temp-Ordner, die Endung .log und maximal 64 MiB pro Datei begrenzt.
 - Add-on-Version angehoben, damit Kodi die bereits enthaltenen neuen Einstellungen und deren Definitionen als reguläres Update übernimmt.
-- Die speicherschonende Verarbeitung großer Kodi-Logs bis 64 MiB aus Version 0.0.9 bleibt enthalten; keine zusätzliche Funktionsänderung gegenüber dem zuletzt veröffentlichten Quellstand.
+- Die speicherschonende Verarbeitung großer Kodi-Logs bis 64 MiB aus Version 0.0.9 bleibt enthalten.
 
 Version 0.0.9
 -------------

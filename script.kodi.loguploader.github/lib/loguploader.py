@@ -15,7 +15,7 @@ import xbmcaddon
 import xbmcgui
 import xbmcvfs
 
-from . import logfilter
+from . import logfilter, testlogs
 
 ADDON = xbmcaddon.Addon()
 ADDON_ID = ADDON.getAddonInfo('id')
@@ -36,6 +36,7 @@ PENDING_PACKAGE_PATH = os.path.join(DIAGNOSTIC_BASE_DIR, 'pending-diagnostic-pac
 PROFILE_DIR = xbmcvfs.translatePath(ADDON.getAddonInfo('profile'))
 STATE_FILE = os.path.join(PROFILE_DIR, 'diagnostic_state.json')
 ADDON_SELECTION_FILE = os.path.join(PROFILE_DIR, 'selected_addons.json')
+TEST_LOG_SELECTION_FILE = os.path.join(PROFILE_DIR, 'selected_test_logs.json')
 PASTE_URL = 'https://paste.kodi.tv/'
 API_ROOT = 'https://api.github.com'
 TIMEOUT = 30
@@ -181,19 +182,22 @@ def _read_vfs_file(path, limit):
     return _decode(data)
 
 
-def _read_log():
+def _read_log(path=None):
+    source_path = path or LOG_FILE
+    source_name = os.path.basename(source_path)
     try:
-        source_size = _vfs_file_size(LOG_FILE) if xbmcvfs.exists(LOG_FILE) else 0
+        source_size = _vfs_file_size(source_path) if xbmcvfs.exists(source_path) else 0
     except Exception:
         source_size = 0
     if not source_size:
-        raise RuntimeError(_s(32028, 'kodi.log was not found or is empty.'))
+        raise RuntimeError('%s wurde nicht gefunden oder ist leer.' % source_name)
     if source_size > MAX_LOG_SOURCE_SIZE:
-        raise RuntimeError('kodi.log überschreitet das Quelldateilimit von %d MiB.' % (MAX_LOG_SOURCE_SIZE // (1024 * 1024)))
+        raise RuntimeError('%s überschreitet das Quelldateilimit von %d MiB.' %
+                           (source_name, MAX_LOG_SOURCE_SIZE // (1024 * 1024)))
     if source_size <= MAX_LOG_SIZE:
-        content = _read_vfs_file(LOG_FILE, MAX_LOG_SOURCE_SIZE)
+        content = _read_vfs_file(source_path, MAX_LOG_SOURCE_SIZE)
         if not content:
-            raise RuntimeError(_s(32028, 'kodi.log was not found or is empty.'))
+            raise RuntimeError('%s wurde nicht gefunden oder ist leer.' % source_name)
         sanitized = _clean_log(content)
         if len(sanitized.encode('utf-8')) <= MAX_LOG_SIZE:
             return sanitized
@@ -202,19 +206,18 @@ def _read_log():
         )
     else:
         filtered, stats = logfilter.filter_log_stream(
-            (_clean_log_line(line) for line in _iter_vfs_lines(LOG_FILE)),
+            (_clean_log_line(line) for line in _iter_vfs_lines(source_path)),
             _selected_addon_tokens(), MAX_FILTERED_LOG_SIZE
         )
-    _debug('Großes Kodi-Log gefiltert: %d/%d Zeilen, %d Add-on-Treffer, %d Bytes.' %
-        (stats['kept_lines'], stats['total_lines'],
+    _debug('%s gefiltert: %d/%d Zeilen, %d Add-on-Treffer, %d Bytes.' %
+        (source_name, stats['kept_lines'], stats['total_lines'],
          stats['matched_addon_lines'], stats['output_bytes']))
     _log(
-        'Großes Kodi-Log gefiltert: %d/%d Zeilen, %d Add-on-Treffer, %d Bytes' %
-        (stats['kept_lines'], stats['total_lines'],
+        '%s gefiltert: %d/%d Zeilen, %d Add-on-Treffer, %d Bytes' %
+        (source_name, stats['kept_lines'], stats['total_lines'],
          stats['matched_addon_lines'], stats['output_bytes'])
     )
     return filtered
-
 
 def _jsonrpc(method, params=None):
     request = {'jsonrpc': '2.0', 'method': method, 'id': 1}
@@ -379,6 +382,60 @@ def _setting_enabled(setting_id):
         return False
 
 
+def _load_test_log_paths():
+    if not xbmcvfs.exists(TEST_LOG_SELECTION_FILE):
+        return []
+    try:
+        handle = xbmcvfs.File(TEST_LOG_SELECTION_FILE)
+        try:
+            state = json.loads(_decode(handle.read()))
+        finally:
+            handle.close()
+        paths = state.get('paths', []) if isinstance(state, dict) else []
+        return testlogs.validate_test_log_paths(
+            paths, TEMP_DIR, xbmcvfs.exists, _vfs_file_size,
+            MAX_LOG_SOURCE_SIZE, max_files=6
+        )
+    except Exception as exc:
+        _log('Test-Log-Auswahl konnte nicht gelesen werden: %s' % exc, xbmc.LOGWARNING)
+        return []
+
+
+def _save_test_log_paths(paths):
+    if not xbmcvfs.exists(PROFILE_DIR):
+        xbmcvfs.mkdirs(PROFILE_DIR)
+    handle = xbmcvfs.File(TEST_LOG_SELECTION_FILE, 'w')
+    try:
+        handle.write(json.dumps({'paths': paths}, ensure_ascii=False))
+    finally:
+        handle.close()
+
+
+def _select_test_logs(dialog):
+    if not _setting_enabled('test_mode'):
+        dialog.ok(ADDON_NAME, _s(32060, 'Aktiviere zuerst den Testmodus in den Add-on-Einstellungen.'))
+        return False
+    selected = dialog.browseMultiple(
+        1, _s(32057, 'Test-Logdateien aus dem Kodi-Temp-Ordner auswählen'),
+        'files', '*.log', False, False, TEMP_DIR
+    )
+    if not selected:
+        return False
+    valid = testlogs.validate_test_log_paths(
+        selected, TEMP_DIR, xbmcvfs.exists, _vfs_file_size,
+        MAX_LOG_SOURCE_SIZE, max_files=6
+    )
+    if not valid:
+        dialog.ok(ADDON_NAME, _s(32061, 'Keine gültigen .log-Dateien im Kodi-Temp-Ordner ausgewählt. Dateien müssen vorhanden und höchstens 64 MiB groß sein.'))
+        return False
+    _save_test_log_paths(valid)
+    dialog.ok(
+        ADDON_NAME,
+        _s(32062, '{count} Test-Logdateien ausgewählt. Sie werden statt der normalen Kodi-Logs verarbeitet.').format(count=len(valid))
+    )
+    return True
+
+
 def _start_diagnostics(dialog):
     http_enabled = _setting_enabled('http_logging')
     drm_enabled = _setting_enabled('drm_logging')
@@ -464,14 +521,28 @@ def _add_text(zf, name, content):
 
 
 def _collect_logs(zf, report):
-    try:
-        names = os.listdir(LOG_DIR)
-    except Exception:
-        names = ['kodi.log']
-    candidates = [name for name in names
-                  if re.match(r'^kodi(?:\\.old(?:\\(\\d+\\))?)?\\.log$', name, re.I)]
-    if 'kodi.log' not in candidates:
-        candidates.append('kodi.log')
+    if _setting_enabled('test_mode'):
+        test_paths = _load_test_log_paths()
+        if not test_paths:
+            raise RuntimeError('Testmodus ist aktiv, aber es wurden keine gültigen Test-Logs ausgewählt.')
+        candidates = [
+            (os.path.basename(path), path, 'test-%02d-%s' % (index, os.path.basename(path)))
+            for index, path in enumerate(test_paths, 1)
+        ]
+        report.append('Testmodus: normale Kodi-Logs wurden durch ausgewählte Testdateien ersetzt.')
+    else:
+        try:
+            names = os.listdir(LOG_DIR)
+        except Exception:
+            names = ['kodi.log']
+        names = [name for name in names
+                 if re.match(r'^kodi(?:\.old(?:\(\d+\))?)?\.log$', name, re.I)]
+        if 'kodi.log' not in names:
+            names.append('kodi.log')
+        candidates = [
+            (name, os.path.join(LOG_DIR, name), name)
+            for name in sorted(set(names))[:6]
+        ]
 
     addon_tokens = _selected_addon_tokens()
     selected = _load_addon_selection()
@@ -481,8 +552,7 @@ def _collect_logs(zf, report):
             item.get('addonid', '') for item in selected
         ))
 
-    for name in sorted(set(candidates))[:6]:
-        path = os.path.join(LOG_DIR, name)
+    for name, path, archive_name in candidates:
         try:
             size = _vfs_file_size(path) if xbmcvfs.exists(path) else 0
             if size <= 0:
@@ -492,7 +562,7 @@ def _collect_logs(zf, report):
                 report.append('Log ausgelassen (Quelldatei größer als %d MiB): %s' %
                               (MAX_LOG_SOURCE_SIZE // (1024 * 1024), name))
                 continue
-            filter_limit = MAX_FILTERED_LOG_SIZE if name.lower() == 'kodi.log' else MAX_OLD_FILTERED_LOG_SIZE
+            filter_limit = MAX_FILTERED_LOG_SIZE if (_setting_enabled('test_mode') or name.lower() == 'kodi.log') else MAX_OLD_FILTERED_LOG_SIZE
             if size <= MAX_LOG_SIZE:
                 content = _read_vfs_file(path, MAX_LOG_SOURCE_SIZE) or ''
                 sanitized = _clean_log(content)
@@ -505,7 +575,7 @@ def _collect_logs(zf, report):
                                   (protocol_stats['http_removed'], protocol_stats['drm_removed']))
                 source_bytes = sanitized.encode('utf-8')
                 if len(source_bytes) <= MAX_LOG_SIZE:
-                    zf.writestr('logs/' + name, source_bytes)
+                    zf.writestr('logs/' + archive_name, source_bytes)
                     report.append('Log aufgenommen: %s (bereinigtes Original)' % name)
                 filtered, stats = logfilter.filter_log(sanitized, addon_tokens, filter_limit)
             else:
@@ -522,14 +592,13 @@ def _collect_logs(zf, report):
                    (name, stats['kept_lines'], stats['total_lines'],
                     stats['matched_addon_lines'], stats['output_bytes']))
             if filtered:
-                filtered_name = 'filtered-' + name
+                filtered_name = 'filtered-' + archive_name
                 zf.writestr('logs/' + filtered_name, filtered.encode('utf-8'))
                 report.append('Log aufgenommen: %s; %d/%d Zeilen behalten, %d Add-on-Treffer, %d Bytes' %
                               (filtered_name, stats['kept_lines'], stats['total_lines'],
                                stats['matched_addon_lines'], stats['output_bytes']))
         except Exception as exc:
             report.append('Log ausgelassen: %s (%s)' % (name, exc))
-
 
 def _collect_playback_sessions(zf, report):
     """Add sanitized per-video capture files without loading them into RAM."""
@@ -812,8 +881,24 @@ def _paste_upload(content):
 
 
 def _upload_normal_log():
-    content = _read_log()
     target = ADDON.getSetting('upload_target') or 'github'
+    if _setting_enabled('test_mode'):
+        paths = _load_test_log_paths()
+        if not paths:
+            raise RuntimeError('Testmodus ist aktiv. Bitte zuerst Test-Logdateien im Kodi-Temp-Ordner auswählen.')
+        destinations = []
+        stamp = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+        for index, path in enumerate(paths, 1):
+            content = _read_log(path)
+            if target == 'paste':
+                destination = _paste_upload(content)
+            else:
+                filename = 'test-%s-%02d-%s' % (stamp, index, os.path.basename(path))
+                destination = _github_upload_bytes(content.encode('utf-8'), filename)
+            destinations.append('%s: %s' % (os.path.basename(path), destination))
+        return '\\n'.join(destinations)
+
+    content = _read_log()
     destination = _paste_upload(content) if target == 'paste' else _github_upload_log(content)
     return destination
 
@@ -854,6 +939,8 @@ def main():
         _s(32034, 'Select add-ons to prioritize in logs'),
         _s(32054, 'Gespeichertes Diagnosepaket erneut hochladen'),
     ]
+    if _setting_enabled('test_mode'):
+        choices.append(_s(32057, 'Test-Logdateien aus dem Kodi-Temp-Ordner auswählen'))
     try:
         _debug('Uploader gestartet; Add-on-Version %s.' % ADDON_VERSION)
         # Keep the main menu open after the add-on selection dialog returns.
@@ -864,6 +951,9 @@ def main():
                 return
             if choice == 4:
                 _select_relevant_addons(dialog)
+                continue
+            if choice == 6:
+                _select_test_logs(dialog)
                 continue
             break
 
@@ -883,4 +973,3 @@ def main():
     except Exception as exc:
         _log('Vorgang fehlgeschlagen: %s' % exc, xbmc.LOGERROR)
         dialog.ok(ADDON_NAME, _s(32027, 'Operation failed: {error}').format(error=str(exc)))
-
