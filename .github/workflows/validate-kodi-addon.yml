@@ -39,15 +39,14 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Validate and quarantine broken addons
+      - name: Validate addon sources
+        env:
+          VALIDATION_REPORT: ${{ runner.temp }}/kodi-addon-validation.txt
         run: |
-          set +e
+          : > "$VALIDATION_REPORT"
           python3 .github/scripts/validate_kodi_addon.py \
-            --report "$RUNNER_TEMP/kodi-addon-validation.txt" \
-            --quarantine-broken
-          status=$?
-          cat "$RUNNER_TEMP/kodi-addon-validation.txt"
-          exit 0
+            --report "$VALIDATION_REPORT"
+          cat "$VALIDATION_REPORT"
 
       - name: Commit quarantined addons
         run: |
