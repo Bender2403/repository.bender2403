@@ -1,0 +1,53 @@
+name: Restore repaired Kodi addons
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kodi-addon-restore
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    name: Restore passing quarantined addons
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Restore passing addons
+        run: |
+          python3 .github/scripts/restore_kodi_addon.py \
+            --report "$RUNNER_TEMP/kodi-addon-restore-report.txt"
+          cat "$RUNNER_TEMP/kodi-addon-restore-report.txt"
+
+      - name: Commit restored addons
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- addons _quarantine
+          if git diff --cached --quiet; then
+            echo 'No addon changes to commit.'
+          else
+            git commit -m 'Restore repaired Kodi addons from quarantine'
+            git push origin HEAD:refs/heads/main
+          fi
+
+      - name: Upload restore report
+        uses: actions/upload-artifact@v4
+        with:
+          name: kodi-addon-restore-report
+          path: ${{ runner.temp }}/kodi-addon-restore-report.txt
+          if-no-files-found: error
+          retention-days: 14
