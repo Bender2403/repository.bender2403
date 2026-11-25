@@ -1,1 +1,0 @@
-Start Kodi addon validation.
