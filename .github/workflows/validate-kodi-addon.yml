@@ -20,7 +20,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: kodi-addon-validation
+  group: kodi-repository-main
   cancel-in-progress: false
 
 jobs:
@@ -83,4 +83,4 @@ jobs:
           name: kodi-addon-validation-report
           path: ${{ runner.temp }}/kodi-addon-validation.txt
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 1

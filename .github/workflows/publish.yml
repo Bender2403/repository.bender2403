@@ -13,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: kodi-repository
+  group: kodi-repository-main
   cancel-in-progress: false
 
 jobs:
@@ -41,6 +41,7 @@ jobs:
           rm generated-addon-dirs.txt
           if ! git diff --cached --quiet; then
             git commit -m "Kodi-Repository automatisch aktualisieren"
+            git pull --rebase origin main
             git push
           else
             echo "Keine Änderungen an den Repository-Dateien."
