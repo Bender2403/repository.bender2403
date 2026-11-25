@@ -8,6 +8,7 @@ on:
       - 'addons/**'
       - '.github/scripts/validate_kodi_addon.py'
       - '.github/workflows/validate-kodi-addon.yml'
+      - '.github/trigger/validate-kodi-addons.txt'
   pull_request:
     paths:
       - 'addons/**'
@@ -16,7 +17,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: kodi-addon-validation
+  cancel-in-progress: false
 
 jobs:
   validate:
@@ -26,22 +31,45 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Validate Kodi addons
-        id: validate
+      - name: Validate and quarantine broken addons
         run: |
           set +e
           python3 .github/scripts/validate_kodi_addon.py \
-            --report "$RUNNER_TEMP/kodi-addon-validation.txt"
+            --report "$RUNNER_TEMP/kodi-addon-validation.txt" \
+            --quarantine-broken
           status=$?
-          echo "status=$status" >> "$GITHUB_OUTPUT"
           cat "$RUNNER_TEMP/kodi-addon-validation.txt"
           exit 0
+
+      - name: Commit quarantined addons
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- addons _quarantine
+          if git diff --cached --quiet; then
+            echo 'No addon changes to commit.'
+          else
+            git commit -m 'Quarantine Kodi addons with validation errors'
+            git push origin HEAD:refs/heads/main
+          fi
+
+      - name: Remove validation trigger
+        run: |
+          if git ls-files --error-unmatch .github/trigger/validate-kodi-addons.txt >/dev/null 2>&1; then
+            git rm .github/trigger/validate-kodi-addons.txt
+            git commit -m 'Remove Kodi validation trigger'
+            git push origin HEAD:refs/heads/main
+          else
+            echo 'Validation trigger is not present.'
+          fi
 
       - name: Upload validation report
         uses: actions/upload-artifact@v4
