@@ -1,0 +1,52 @@
+name: Validate Kodi addons
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'addons/**'
+      - '.github/scripts/validate_kodi_addon.py'
+      - '.github/workflows/validate-kodi-addon.yml'
+  pull_request:
+    paths:
+      - 'addons/**'
+      - '.github/scripts/validate_kodi_addon.py'
+      - '.github/workflows/validate-kodi-addon.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate addon sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate Kodi addons
+        id: validate
+        run: |
+          set +e
+          python3 .github/scripts/validate_kodi_addon.py \
+            --report "$RUNNER_TEMP/kodi-addon-validation.txt"
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/kodi-addon-validation.txt"
+          exit 0
+
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: kodi-addon-validation-report
+          path: ${{ runner.temp }}/kodi-addon-validation.txt
+          if-no-files-found: error
+          retention-days: 14
