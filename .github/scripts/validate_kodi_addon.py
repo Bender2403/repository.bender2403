@@ -43,15 +43,26 @@ def parse_xml(path: Path):
         return None
 
 
-def validate_addon_xml(addon_dir: Path) -> str | None:
+def detect_addon_type(root: ET.Element, path: Path) -> str:
+    if root.find("extension[@point='xbmc.addon.repository']") is not None:
+        return 'repository'
+
+    if root.find("extension[@point='xbmc.python.script']") is not None:
+        return 'script'
+
+    fail(f'{path}: no supported xbmc.python.script or xbmc.addon.repository extension found')
+    return 'unknown'
+
+
+def validate_addon_xml(addon_dir: Path) -> tuple[str | None, str]:
     path = addon_dir / 'addon.xml'
     if not path.is_file():
         fail(f'{path}: missing addon.xml')
-        return None
+        return None, 'unknown'
 
     tree = parse_xml(path)
     if tree is None:
-        return None
+        return None, 'unknown'
 
     root = tree.getroot()
     addon_id = root.attrib.get('id', '')
@@ -64,28 +75,74 @@ def validate_addon_xml(addon_dir: Path) -> str | None:
     if root.attrib.get('provider-name') is None:
         fail(f'{path}: missing provider-name')
 
-    requires = root.find('requires')
-    if requires is None:
-        fail(f'{path}: missing requires element')
-    else:
-        imports = {
-            item.attrib.get('addon')
-            for item in requires.findall('import')
-        }
-        if 'xbmc.python' not in imports:
-            fail(f'{path}: missing xbmc.python dependency')
+    addon_type = detect_addon_type(root, path)
 
-    extension = root.find("extension[@point='xbmc.python.script']")
+    if addon_type == 'repository':
+        extension = root.find("extension[@point='xbmc.addon.repository']")
+        if extension is None:
+            fail(f'{path}: missing xbmc.addon.repository extension')
+        return addon_id or None, addon_type
+
+    if addon_type == 'script':
+        requires = root.find('requires')
+        if requires is None:
+            fail(f'{path}: missing requires element')
+        else:
+            imports = {
+                item.attrib.get('addon')
+                for item in requires.findall('import')
+            }
+            if 'xbmc.python' not in imports:
+                fail(f'{path}: missing xbmc.python dependency')
+
+        extension = root.find("extension[@point='xbmc.python.script']")
+        if extension is None:
+            fail(f'{path}: missing xbmc.python.script extension')
+        else:
+            library = extension.attrib.get('library', '')
+            if not library:
+                fail(f'{path}: script extension has no library')
+            elif not (addon_dir / library).is_file():
+                fail(f'{path}: script library does not exist: {library}')
+
+    return addon_id or None, addon_type
+
+
+def validate_repository(addon_dir: Path) -> None:
+    path = addon_dir / 'addon.xml'
+    tree = parse_xml(path)
+    if tree is None:
+        return
+
+    root = tree.getroot()
+    extension = root.find("extension[@point='xbmc.addon.repository']")
     if extension is None:
-        fail(f'{path}: missing xbmc.python.script extension')
-    else:
-        library = extension.attrib.get('library', '')
-        if not library:
-            fail(f'{path}: script extension has no library')
-        elif not (addon_dir / library).is_file():
-            fail(f'{path}: script library does not exist: {library}')
+        return
 
-    return addon_id or None
+    directories = extension.findall('dir')
+    if not directories:
+        fail(f'{path}: repository extension has no dir element')
+        return
+
+    for index, directory in enumerate(directories, start=1):
+        info = directory.find('info')
+        checksum = directory.find('checksum')
+        datadir = directory.find('datadir')
+
+        if info is None or not (info.text or '').strip():
+            fail(f'{path}: repository dir {index} has no info URL')
+        else:
+            note(f'{path}: repository dir {index} info URL found')
+
+        if checksum is None or not (checksum.text or '').strip():
+            warn(f'{path}: repository dir {index} has no checksum URL')
+        else:
+            note(f'{path}: repository dir {index} checksum URL found')
+
+        if datadir is None or not (datadir.text or '').strip():
+            fail(f'{path}: repository dir {index} has no datadir URL')
+        else:
+            note(f'{path}: repository dir {index} datadir URL found')
 
 
 def validate_python(addon_dir: Path, addon_id: str | None) -> set[str]:
@@ -336,7 +393,12 @@ def main() -> int:
 
         for addon_dir in sorted(addon_dirs):
             note(f'Validating {addon_dir.name} ...')
-            addon_id = validate_addon_xml(addon_dir)
+            addon_id, addon_type = validate_addon_xml(addon_dir)
+
+            if addon_type == 'repository':
+                validate_repository(addon_dir)
+                continue
+
             used_ids = validate_python(addon_dir, addon_id)
             setting_ids = validate_settings(addon_dir, addon_id)
             used_ids |= setting_ids
