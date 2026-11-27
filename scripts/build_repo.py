@@ -19,40 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / "addons"
 SITE = ROOT / "_site"
 
-# Third-party repository installers hosted in the user's original-addons branch.
-# The ZIPs are fetched during every build, inspected, and published as normal
-# Kodi repository entries. They are not unpacked into the source repository.
-EXTERNAL_ZIPS = [
-    {
-        "url": "https://raw.githubusercontent.com/Bender2403/kodi-rakuten-tv-addon/original-addons/repository.heptamers.stuff-1.0.0.zip",
-        "addon_id": "repository.heptamers.stuff",
-        "version": "1.0.0",
-    },
-    {
-        "url": "https://raw.githubusercontent.com/Bender2403/kodi-rakuten-tv-addon/original-addons/repository.jurialmunkey-3.5.zip",
-        "addon_id": "repository.jurialmunkey",
-        "version": "3.5",
-    },
-    {
-        "url": "https://raw.githubusercontent.com/Bender2403/kodi-rakuten-tv-addon/original-addons/repository.xvault-1.0.3.zip",
-        "addon_id": "repository.xvault",
-        "version": "1.0.3",
-    },
-    {
-        "repository": "Bender2403/kodi-rakuten-tv-addon",
-        "ref": "original-addons",
-        "path": "plugin.video.rakuten.de-1.0.4+matrix.1.zip",
-        "addon_id": "plugin.video.rakuten.de",
-        "version": "1.0.4+matrix.1",
-    },
-    {
-        "repository": "Bender2403/kodi-rakuten-tv-addon",
-        "ref": "kodi-logs",
-        "path": "dist/script.kodi.loguploader.github-0.1.4.zip",
-        "addon_id": "script.kodi.loguploader.github",
-        "version": "0.1.4",
-    },
-]
+# ZIP intake is handled from arbeitsordner/eingang/ below.
 
 if SITE.exists():
     shutil.rmtree(SITE)
@@ -60,50 +27,6 @@ SITE.mkdir(parents=True)
 
 all_addons = []
 generated_dirs = []
-
-
-def publish_external_zip(item):
-    source_repo = item.get("repository", "Bender2403/kodi-rakuten-tv-addon")
-    source_ref = item.get("ref", "original-addons")
-    source_path = item.get("path") or item.get("url", "").rsplit("/", 1)[-1]
-    if not source_path:
-        raise SystemExit(f"Quellpfad für {item['addon_id']} fehlt")
-    filename = source_path.rsplit("/", 1)[-1]
-    api_url = (
-        "https://api.github.com/repos/" + source_repo + "/contents/"
-        + urllib.parse.quote(source_path, safe="/")
-        + "?ref=" + urllib.parse.quote(source_ref, safe="")
-    )
-    token = __import__("os").environ.get("SOURCE_REPO_TOKEN")
-    if not token:
-        raise SystemExit("GitHub-Secret SOURCE_REPO_TOKEN fehlt. Bitte einen Token mit Leserechten auf das private Quell-Repository hinterlegen.")
-    request = urllib.request.Request(
-        api_url,
-        headers={
-            "User-Agent": "Bender2403-Kodi-Repository",
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-        },
-    )
-    with urllib.request.urlopen(request, timeout=60) as response:
-        payload = json.loads(response.read().decode("utf-8"))
-    if payload.get("encoding") != "base64" or not payload.get("content"):
-        raise SystemExit(f"GitHub hat keinen Base64-Dateiinhalt für {filename} geliefert")
-    try:
-        archive_bytes = base64.b64decode(payload["content"], validate=True)
-        addon_xml = extract_addon_zip(
-            archive_bytes, ROOT, item["addon_id"], item["version"]
-        )
-    except (ValueError, UnsafeAddonZip) as exc:
-        raise SystemExit(f"{item['addon_id']}: unsicheres oder ungültiges ZIP: {exc}") from exc
-
-    archive_name = f"{item['addon_id']}-{item['version']}.zip"
-    target = ROOT / item["addon_id"]
-    legacy_zip_dir = SITE / "zips" / item["addon_id"]
-    legacy_zip_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(target / archive_name, legacy_zip_dir / archive_name)
-    all_addons.append(addon_xml)
-    generated_dirs.append(item["addon_id"])
 
 
 for source in sorted(p for p in SOURCES.iterdir() if p.is_dir()):
@@ -178,12 +101,82 @@ for source in sorted(p for p in SOURCES.iterdir() if p.is_dir()):
     all_addons.append(ET.tostring(addon, encoding="unicode"))
     generated_dirs.append(addon_id)
 
-for item in EXTERNAL_ZIPS:
-    if item["addon_id"] in generated_dirs:
-        raise SystemExit(
-            f"Doppelte Add-on-ID {item['addon_id']}: Quell-Add-on und EXTERNAL_ZIPS kollidieren"
+
+# Process ZIP files supplied through the repository's inbox. Invalid archives
+# are quarantined individually; one bad ZIP must not stop the remaining files.
+INBOX = ROOT / "arbeitsordner" / "eingang"
+QUARANTINE = ROOT / "arbeitsordner" / "quarantaene"
+INBOX.mkdir(parents=True, exist_ok=True)
+QUARANTINE.mkdir(parents=True, exist_ok=True)
+
+source_ids = set(generated_dirs)
+incoming = []
+for zip_path in sorted(INBOX.glob("*.zip")):
+    try:
+        archive_bytes = zip_path.read_bytes()
+        if len(archive_bytes) > 50 * 1024 * 1024:
+            raise UnsafeAddonZip("Komprimierte ZIP-Datei überschreitet 50 MiB")
+        from io import BytesIO
+        with zipfile.ZipFile(BytesIO(archive_bytes)) as archive:
+            addon_xml_files = [i for i in archive.infolist()
+                               if i.filename.rstrip("/").split("/")[-1].lower() == "addon.xml"
+                               and not i.is_dir()]
+            if len(addon_xml_files) != 1:
+                raise UnsafeAddonZip("ZIP muss genau eine addon.xml enthalten")
+            root = ET.fromstring(archive.read(addon_xml_files[0]))
+            addon_id, version = root.attrib.get("id"), root.attrib.get("version")
+            if not addon_id or not version:
+                raise UnsafeAddonZip("addon.xml enthält keine Add-on-ID oder Version")
+            # Full path, metadata, size and ZIP safety validation before extraction.
+            from zip_safety import inspect_addon_zip
+            inspect_addon_zip(archive, addon_id, version)
+        incoming.append((zip_path, archive_bytes, addon_id, version))
+    except (OSError, ValueError, zipfile.BadZipFile, RuntimeError) as exc:
+        destination = QUARANTINE / zip_path.name
+        counter = 1
+        while destination.exists():
+            destination = QUARANTINE / f"{zip_path.stem}-{counter}{zip_path.suffix}"
+            counter += 1
+        shutil.move(str(zip_path), destination)
+        (destination.with_suffix(destination.suffix + ".reason.txt")).write_text(
+            f"Datei: {zip_path.name}\\nFehler: {exc}\\n", encoding="utf-8"
         )
-    publish_external_zip(item)
+        print(f"QUARANTÄNE: {zip_path.name}: {exc}")
+        
+# Reject all ZIPs involved in an ID collision (including collisions with addons/).
+from collections import Counter
+counts = Counter(item[2] for item in incoming)
+colliding = {addon_id for addon_id, count in counts.items() if count > 1}
+colliding.update(set(counts) & source_ids)
+
+for zip_path, archive_bytes, addon_id, version in incoming:
+    try:
+        if addon_id in colliding:
+            raise UnsafeAddonZip(
+                f"Doppelte Add-on-ID {addon_id}: Konflikt mit anderem Eingangs-ZIP "
+                "oder einem Quellordner unter addons/"
+            )
+        addon_xml = extract_addon_zip(archive_bytes, ROOT, addon_id, version)
+        archive_name = f"{addon_id}-{version}.zip"
+        published_zip = ROOT / addon_id / archive_name
+        legacy_zip_dir = SITE / "zips" / addon_id
+        legacy_zip_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(published_zip, legacy_zip_dir / archive_name)
+        all_addons.append(addon_xml)
+        generated_dirs.append(addon_id)
+        zip_path.unlink()
+        print(f"ZIP übernommen: {zip_path.name} -> {addon_id} {version}")
+    except (OSError, ValueError, zipfile.BadZipFile, RuntimeError) as exc:
+        destination = QUARANTINE / zip_path.name
+        counter = 1
+        while destination.exists():
+            destination = QUARANTINE / f"{zip_path.stem}-{counter}{zip_path.suffix}"
+            counter += 1
+        shutil.move(str(zip_path), destination)
+        (destination.with_suffix(destination.suffix + ".reason.txt")).write_text(
+            f"Datei: {zip_path.name}\\nFehler: {exc}\\n", encoding="utf-8"
+        )
+        print(f"QUARANTÄNE: {zip_path.name}: {exc}")
 
 if not all_addons:
     raise SystemExit("Keine Add-ons in addons/ gefunden.")

@@ -44,14 +44,12 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       - name: Kodi-Repository-Dateien bauen
-        env:
-          SOURCE_REPO_TOKEN: ${{ secrets.SOURCE_REPO_TOKEN }}
         run: python scripts/build_repo.py
       - name: Generierte Dateien veröffentlichen
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A -- addons.xml addons.xml.md5
+          git add -A -- addons.xml addons.xml.md5 arbeitsordner
           while IFS= read -r addon_dir; do
             [ -n "$addon_dir" ] && git add -A -- "$addon_dir"
           done < generated-addon-dirs.txt

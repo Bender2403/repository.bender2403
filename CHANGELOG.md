@@ -8,6 +8,16 @@ Versionsnummern des Repository-Add-ons entsprechen den Versionen in
 
 ## [Unreleased]
 
+### Hinzugefügt
+
+- ZIP-Eingangsordner unter `arbeitsordner/eingang/`; ungültige oder kollidierende ZIPs werden einzeln nach `arbeitsordner/quarantaene/` verschoben und mit einem Fehlerbericht versehen.
+- Gültige Eingangs-ZIPs werden nach Sicherheitsprüfung übernommen; erfolgreich veröffentlichte Eingangsdateien werden entfernt.
+
+### Entfernt
+
+- Automatischer Bezug externer ZIPs und die dafür benötigte `SOURCE_REPO_TOKEN`-Abhängigkeit.
+- Bisherige generierte externe Add-on-Verzeichnisse und ZIP-Pakete.
+
 ### Geändert
 
 - Repository-Icon auf PNG mit 256 × 256 Pixeln umgestellt; das vorhandene Motiv wurde quadratisch zugeschnitten und für den Kodi-Checker optimiert.

@@ -13,22 +13,24 @@ Repository-Metadaten:
 
 ## Automatische Veröffentlichung und Updates
 
-Die Quellordner liegen unter `addons/<addon-id>/`. Bei jedem Push nach `main` baut GitHub Actions automatisch:
-- die zentrale `addons.xml`,
-- die Prüfsumme `addons.xml.md5`,
-- pro Add-on einen Ordner `<addon-id>/` mit Add-on-Dateien und ZIP-Paket.
+Die Quellordner liegen unter `addons/<addon-id>/`. Bei jedem Push nach `main` baut GitHub Actions automatisch die zentrale `addons.xml`, die Prüfsumme und die ZIP-Pakete. Generierte Add-on-Verzeichnisse werden direkt im Hauptbranch aktualisiert.
 
-Diese generierten Dateien werden direkt in den Hauptbranch committed. Kodi kann dadurch neue Add-on-Versionen über das installierte Repository erkennen.
+Neue Add-ons können alternativ als ZIP-Datei über den Eingangsordner bereitgestellt werden:
 
-Bei Änderungen am Repository-Add-on muss dessen Versionsnummer in `addons/repository.bender2403/addon.xml` erhöht werden. Bei Änderungen an den Repository-URLs muss die Repository-Add-on-Version ebenfalls erhöht werden, damit Kodi die Quelle neu einliest.
+- `arbeitsordner/eingang/`: Hier neue Add-on-ZIPs ablegen.
+- `arbeitsordner/quarantaene/`: Fehlerhafte, unsichere oder kollidierende ZIPs werden hierhin verschoben. Zu jeder Datei wird eine `.reason.txt` mit dem Fehlergrund abgelegt.
+
+Jede ZIP wird einzeln geprüft. Fehlerhafte Dateien stoppen die Verarbeitung der übrigen ZIPs nicht. Gültige ZIPs werden übernommen und nach erfolgreicher Veröffentlichung aus dem Eingangsordner entfernt. ZIPs mit doppelter Add-on-ID oder einer ID, die bereits unter `addons/` existiert, werden in Quarantäne verschoben.
 
 ## Aufbau
 
-- `addons/`: Quellordner der veröffentlichten Kodi-Add-ons
-- `scripts/build_repo.py`: Erzeugt ZIP-Dateien, `addons.xml` und Prüfsumme
-- `.github/workflows/publish.yml`: Baut und veröffentlicht die Dateien automatisch
-- `<addon-id>/`: Automatisch erzeugte Veröffentlichungsordner mit ZIP-Dateien
+- `addons/`: Quellordner der regulären Kodi-Add-ons
+- `arbeitsordner/eingang/`: Eingangsordner für Add-on-ZIPs
+- `arbeitsordner/quarantaene/`: Fehlerhafte ZIPs samt Fehlerbericht
+- `scripts/build_repo.py`: Baut Repository-Metadaten und verarbeitet ZIP-Eingänge
+- `scripts/zip_safety.py`: Sicherheitsprüfung und sicheres Entpacken
+- `.github/workflows/publish.yml`: Automatischer Build und Veröffentlichung
 
-Neue Add-ons werden nur aufgenommen, wenn sie als Quellordner unter `addons/` liegen.
+Bei Änderungen am Repository-Add-on muss dessen Versionsnummer in `addons/repository.bender2403/addon.xml` erhöht werden. Bei Änderungen an den Repository-URLs muss die Repository-Add-on-Version ebenfalls erhöht werden.
 
-**RTL+ ist derzeit nicht Bestandteil dieses Repositorys. Rakuten TV wird als externes ZIP aus dem Branch `original-addons` des Quell-Repositories eingebunden.**
+**RTL+ und Rakuten TV sowie externe Repository-Installer werden nicht mehr automatisch aus anderen Repositories geladen.**
