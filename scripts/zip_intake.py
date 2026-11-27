@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 
-_SAFE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\\Z")
+_SAFE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 
 
 def _report_name(addon_id: str | None, zip_path: Path) -> str:
@@ -42,12 +42,12 @@ def quarantine_and_report(
 
     report_path = quarantine_dir / f"{_report_name(addon_id, zip_path)}.txt"
     report_text = (
-        f"Add-on: {addon_id or 'nicht ermittelbar'}\\n"
-        f"ZIP-Datei: {zip_path.name}\\n"
-        f"Fehler: {error}\\n"
-        "----------------------------------------\\n"
+        f"Add-on: {addon_id or 'nicht ermittelbar'}\n"
+        f"ZIP-Datei: {zip_path.name}\n"
+        f"Fehler: {error}\n"
+        "----------------------------------------\n"
     )
-    with report_path.open("a", encoding="utf-8", newline="\\n") as report:
+    with report_path.open("a", encoding="utf-8", newline="\n") as report:
         report.write(report_text)
 
     # Delete only after the report has been successfully written and closed.
