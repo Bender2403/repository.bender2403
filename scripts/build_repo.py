@@ -139,7 +139,7 @@ for zip_path in sorted(INBOX.glob("*.zip")):
             counter += 1
         shutil.move(str(zip_path), destination)
         (destination.with_suffix(destination.suffix + ".reason.txt")).write_text(
-            f"Datei: {zip_path.name}\\nFehler: {exc}\\n", encoding="utf-8"
+            f"Datei: {zip_path.name}\nFehler: {exc}\n", encoding="utf-8"
         )
         print(f"QUARANTÄNE: {zip_path.name}: {exc}")
         
@@ -174,7 +174,7 @@ for zip_path, archive_bytes, addon_id, version in incoming:
             counter += 1
         shutil.move(str(zip_path), destination)
         (destination.with_suffix(destination.suffix + ".reason.txt")).write_text(
-            f"Datei: {zip_path.name}\\nFehler: {exc}\\n", encoding="utf-8"
+            f"Datei: {zip_path.name}\nFehler: {exc}\n", encoding="utf-8"
         )
         print(f"QUARANTÄNE: {zip_path.name}: {exc}")
 
