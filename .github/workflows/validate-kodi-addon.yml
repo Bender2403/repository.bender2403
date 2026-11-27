@@ -40,15 +40,23 @@ jobs:
           python-version: '3.12'
 
       - name: Validate addon sources
+        id: validation
+        continue-on-error: true
         env:
           VALIDATION_REPORT: ${{ runner.temp }}/kodi-addon-validation.txt
         run: |
           : > "$VALIDATION_REPORT"
-          python3 .github/scripts/validate_kodi_addon.py \
-            --report "$VALIDATION_REPORT"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            python3 .github/scripts/validate_kodi_addon.py --quarantine --report "$VALIDATION_REPORT"
+          else
+            python3 .github/scripts/validate_kodi_addon.py --report "$VALIDATION_REPORT"
+          fi
+          status=$?
           cat "$VALIDATION_REPORT"
+          exit "$status"
 
       - name: Commit quarantined addons
+        if: github.event_name == 'push'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -65,6 +73,7 @@ jobs:
           fi
 
       - name: Remove validation trigger
+        if: github.event_name == 'push'
         run: |
           git fetch origin main
           git rebase origin/main
@@ -77,9 +86,14 @@ jobs:
           fi
 
       - name: Upload validation report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: kodi-addon-validation-report
           path: ${{ runner.temp }}/kodi-addon-validation.txt
-          if-no-files-found: error
-          retention-days: 1
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Fail pull request when validation finds errors
+        if: github.event_name == 'pull_request' && steps.validation.outcome == 'failure'
+        run: exit 1
