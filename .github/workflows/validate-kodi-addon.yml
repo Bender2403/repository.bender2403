@@ -6,14 +6,30 @@ on:
       - main
     paths:
       - 'addons/**'
+      - 'scripts/build_repo.py'
+      - 'scripts/zip_safety.py'
+      - '.github/scripts/check_kodi_versions.py'
+      - '.github/scripts/test_kodi_version_compatibility.py'
+      - '.github/scripts/test_zip_safety.py'
       - '.github/scripts/validate_kodi_addon.py'
+      - '.github/scripts/restore_kodi_addon.py'
+      - '.github/scripts/test_kodi_addon_validation.py'
       - '.github/workflows/validate-kodi-addon.yml'
+      - '.github/workflows/restore-kodi-addons.yml'
       - '.github/trigger/validate-kodi-addons.txt'
   pull_request:
     paths:
       - 'addons/**'
+      - 'scripts/build_repo.py'
+      - 'scripts/zip_safety.py'
+      - '.github/scripts/check_kodi_versions.py'
+      - '.github/scripts/test_kodi_version_compatibility.py'
+      - '.github/scripts/test_zip_safety.py'
       - '.github/scripts/validate_kodi_addon.py'
+      - '.github/scripts/restore_kodi_addon.py'
+      - '.github/scripts/test_kodi_addon_validation.py'
       - '.github/workflows/validate-kodi-addon.yml'
+      - '.github/workflows/restore-kodi-addons.yml'
   workflow_dispatch:
 
 permissions:
@@ -25,9 +41,9 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate addon sources
+    name: Validate addon sources and Kodi compatibility
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -39,16 +55,27 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Run validator and restore unit tests
+        run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
+
       - name: Validate addon sources
+        id: validation
+        continue-on-error: true
         env:
           VALIDATION_REPORT: ${{ runner.temp }}/kodi-addon-validation.txt
         run: |
           : > "$VALIDATION_REPORT"
-          python3 .github/scripts/validate_kodi_addon.py \
-            --report "$VALIDATION_REPORT"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            python3 .github/scripts/validate_kodi_addon.py --quarantine --report "$VALIDATION_REPORT"
+          else
+            python3 .github/scripts/validate_kodi_addon.py --report "$VALIDATION_REPORT"
+          fi
+          status=$?
           cat "$VALIDATION_REPORT"
+          exit "$status"
 
       - name: Commit quarantined addons
+        if: github.event_name == 'push'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -65,6 +92,7 @@ jobs:
           fi
 
       - name: Remove validation trigger
+        if: github.event_name == 'push'
         run: |
           git fetch origin main
           git rebase origin/main
@@ -76,10 +104,34 @@ jobs:
             echo 'Validation trigger is not present.'
           fi
 
+      - name: Install official Kodi add-on checker
+        run: python3 -m pip install 'kodi-addon-checker==0.0.36'
+
+      - name: Check Kodi 20 Nexus, Kodi 21 Omega and Kodi 22 Piers
+        id: kodi_compatibility
+        run: |
+          python3 .github/scripts/check_kodi_versions.py \
+            --addons-dir addons \
+            --report-dir "${{ runner.temp }}/kodi-compatibility-reports"
+
       - name: Upload validation report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: kodi-addon-validation-report
           path: ${{ runner.temp }}/kodi-addon-validation.txt
-          if-no-files-found: error
-          retention-days: 1
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload Kodi version compatibility reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kodi-version-compatibility-reports
+          path: ${{ runner.temp }}/kodi-compatibility-reports/*.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Fail pull request when validation finds errors
+        if: github.event_name == 'pull_request' && steps.validation.outcome == 'failure'
+        run: exit 1
