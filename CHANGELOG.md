@@ -19,6 +19,7 @@ Versionsnummern des Repository-Add-ons entsprechen den Versionen in
 - Quarantäneordner `_quarantine/` mit README und dokumentiertem Restore-Ablauf fest verankert.
 - Externe Add-on-ZIPs werden vor dem Entpacken auf Pfadmanipulation, Symlinks, doppelte Einträge, Dateianzahl, Einzel-/Gesamtgröße, Kompressionsverhältnis und Add-on-Metadaten geprüft.
 - ZIP-Inhalte werden zunächst in einem Staging-Ordner entpackt und das Veröffentlichungsverzeichnis erst nach erfolgreicher Prüfung atomar ersetzt.
+- Komprimierte ZIP-Dateien sind zusätzlich auf 50 MiB begrenzt; lokale Add-on-Ausgaben werden ebenfalls staged und atomar ersetzt, Symlinks im Quellordner abgelehnt.
 - Kollisionen zwischen Add-on-Quellordnern und `EXTERNAL_ZIPS` werden erkannt; ZIP-Sicherheits-Regressionstests laufen vor Veröffentlichung.
 
 ## [1.0.1] - 2026-11-06
