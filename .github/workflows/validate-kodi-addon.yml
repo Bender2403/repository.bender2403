@@ -6,6 +6,9 @@ on:
       - main
     paths:
       - 'addons/**'
+      - 'scripts/build_repo.py'
+      - 'scripts/zip_safety.py'
+      - '.github/scripts/test_zip_safety.py'
       - '.github/scripts/validate_kodi_addon.py'
       - '.github/scripts/restore_kodi_addon.py'
       - '.github/scripts/test_kodi_addon_validation.py'
@@ -15,6 +18,9 @@ on:
   pull_request:
     paths:
       - 'addons/**'
+      - 'scripts/build_repo.py'
+      - 'scripts/zip_safety.py'
+      - '.github/scripts/test_zip_safety.py'
       - '.github/scripts/validate_kodi_addon.py'
       - '.github/scripts/restore_kodi_addon.py'
       - '.github/scripts/test_kodi_addon_validation.py'
