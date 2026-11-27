@@ -11,6 +11,7 @@ import zipfile
 from pathlib import Path, PurePosixPath
 from xml.etree import ElementTree as ET
 
+MAX_ARCHIVE_SIZE = 50 * 1024 * 1024
 MAX_FILES = 1000
 MAX_FILE_SIZE = 25 * 1024 * 1024
 MAX_TOTAL_SIZE = 100 * 1024 * 1024
@@ -116,6 +117,8 @@ def inspect_addon_zip(archive: zipfile.ZipFile, expected_id: str, expected_versi
 def extract_addon_zip(archive_bytes: bytes, destination_root: Path,
                       expected_id: str, expected_version: str) -> str:
     """Validate and atomically replace destination_root/expected_id."""
+    if len(archive_bytes) > MAX_ARCHIVE_SIZE:
+        raise UnsafeAddonZip("Komprimierte ZIP-Datei überschreitet 50 MiB")
     if not re.fullmatch(r"[A-Za-z0-9._-]+", expected_id):
         raise UnsafeAddonZip(f"Ungültige Add-on-ID: {expected_id!r}")
     if not re.fullmatch(r"[0-9A-Za-z.+_-]+", expected_version):
