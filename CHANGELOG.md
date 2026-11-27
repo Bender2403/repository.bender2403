@@ -10,6 +10,8 @@ Versionsnummern des Repository-Add-ons entsprechen den Versionen in
 
 ### Geändert
 
+- Repository-Icon auf PNG mit 256 × 256 Pixeln umgestellt; das vorhandene Motiv wurde quadratisch zugeschnitten und für den Kodi-Checker optimiert.
+
 - Kodi-Add-on-Validator prüft generische Extension Points und behandelt optionale Einstellungs- und Sprachdateien nicht mehr als zwingende Voraussetzungen.
 - Python-Dateien werden ohne Erzeugung von __pycache__- oder .pyc-Dateien syntaktisch geprüft.
 - Fehlerhafte Add-on-Quellordner können beim Push sicher in Quarantäne verschoben werden.
