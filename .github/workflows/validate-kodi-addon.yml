@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'addons/**'
-      - '.github/scripts/validate_kodi_addon.py'
+      - '.github/scripts/validate_kodi_addon.py'\n      - '.github/scripts/restore_kodi_addon.py'\n      - '.github/scripts/test_kodi_addon_validation.py'
       - '.github/workflows/validate-kodi-addon.yml'
       - '.github/trigger/validate-kodi-addons.txt'
   pull_request:
