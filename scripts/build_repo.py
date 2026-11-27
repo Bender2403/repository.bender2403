@@ -107,7 +107,11 @@ def publish_external_zip(item):
 
 
 for source in sorted(p for p in SOURCES.iterdir() if p.is_dir()):
+    if source.is_symlink():
+        raise SystemExit(f"Symlink als Add-on-Quellordner ist nicht erlaubt: {source}")
     addon_xml = source / "addon.xml"
+    if addon_xml.is_symlink():
+        raise SystemExit(f"Symlink als addon.xml ist nicht erlaubt: {addon_xml}")
     if not addon_xml.is_file():
         continue
 
