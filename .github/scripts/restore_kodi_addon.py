@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Restore repaired Kodi addons from _quarantine to addons.
-
-Each quarantined addon is validated again. Only addons without validation
-errors are moved back to addons/. Broken addons remain in _quarantine.
-"""
-
+"""Restore repaired add-on sources from _quarantine after revalidation."""
 from __future__ import annotations
 
 import argparse
@@ -13,126 +8,83 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / '.github' / 'scripts'))
+sys.path.insert(0, str(ROOT / ".github" / "scripts"))
+import validate_kodi_addon as validator  # noqa: E402
 
-import validate_kodi_addon as validator
-
-ADDONS = ROOT / 'addons'
-QUARANTINE = ROOT / '_quarantine'
-
-
-def validate_quarantined_addon(addon_dir: Path) -> tuple[bool, str | None]:
-    validator.errors.clear()
-    validator.warnings.clear()
-    validator.notes.clear()
-
-    validator.note(f'Validating quarantined addon {addon_dir.name} ...')
-    addon_id = validator.validate_addon_xml(addon_dir)
-    used_ids = validator.validate_python(addon_dir, addon_id)
-    setting_ids = validator.validate_settings(addon_dir, addon_id)
-    used_ids |= setting_ids
-    validator.validate_translations(addon_dir, used_ids)
-    validator.validate_kodi_compatibility(addon_dir)
-
-    passed = not validator.errors
-    return passed, addon_id
+ADDONS = ROOT / "addons"
+QUARANTINE = ROOT / "_quarantine"
 
 
-def restore(addon_dir: Path, addon_id: str | None) -> Path:
-    target = ADDONS / (addon_id or addon_dir.name)
+def restore_one(addon_dir: Path) -> tuple[bool, str]:
+    passed = validator.validate_addon(addon_dir)
+    errors = list(validator.ERRORS)
+    warnings = list(validator.WARNINGS)
+    notes = list(validator.NOTES)
+
+    if not passed:
+        return False, f"{addon_dir.relative_to(ROOT)}: validation failed: " + "; ".join(errors)
+
+    # Read the ID from the validated XML; never use an unchecked value as a path.
+    root = validator.parse_xml(addon_dir / "addon.xml")
+    addon_id = root.attrib.get("id", "").strip() if root is not None else ""
+    if not addon_id or addon_id != addon_dir.name:
+        return False, f"{addon_dir.relative_to(ROOT)}: Add-on-ID fehlt oder passt nicht zum Quarantäneordner"
+
+    target = ADDONS / addon_id
     if target.exists():
-        shutil.rmtree(target)
+        return False, f"{addon_dir.relative_to(ROOT)}: Ziel {target.relative_to(ROOT)} existiert bereits; nichts überschrieben"
+
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(str(addon_dir), str(target))
-    validator.note(
-        f'{addon_dir.name}: restored to {target.relative_to(ROOT)}'
-    )
-    return target
-
-
-def write_report(path: Path, restored: list[str], still_broken: list[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    lines = [
-        'Kodi addon restore report',
-        '',
-        f'Restored addons: {len(restored)}',
-        f'Still broken addons: {len(still_broken)}',
-        f'Warnings: {len(validator.warnings)}',
-        f'Notes: {len(validator.notes)}',
-        '',
-    ]
-
-    if restored:
-        lines.extend(['RESTORED ADDONS', '-' * 60])
-        lines.extend(f'- {item}' for item in restored)
-        lines.append('')
-
-    if still_broken:
-        lines.extend(['STILL BROKEN ADDONS', '-' * 60])
-        lines.extend(f'- {item}' for item in still_broken)
-        lines.append('')
-
-    if validator.errors:
-        lines.extend(['ERRORS', '-' * 60])
-        lines.extend(f'- {item}' for item in validator.errors)
-        lines.append('')
-
-    if validator.warnings:
-        lines.extend(['WARNINGS', '-' * 60])
-        lines.extend(f'- {item}' for item in validator.warnings)
-        lines.append('')
-
-    if validator.notes:
-        lines.extend(['NOTES', '-' * 60])
-        lines.extend(f'- {item}' for item in validator.notes)
-        lines.append('')
-
-    path.write_text('\n'.join(lines), encoding='utf-8')
+    return True, f"{addon_dir.relative_to(ROOT)} -> {target.relative_to(ROOT)}"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--report',
-        default='kodi-addon-restore-report.txt',
-        help='Path of the restore report file',
-    )
+    parser.add_argument("--report", default="kodi-addon-restore-report.txt")
     args = parser.parse_args()
-    report_path = Path(args.report).resolve()
+    report = Path(args.report).resolve()
 
     restored: list[str] = []
-    still_broken: list[str] = []
+    remaining: list[str] = []
+    errors: list[str] = []
+    warnings: list[str] = []
+    notes: list[str] = []
 
     if not QUARANTINE.is_dir():
-        validator.note(f'{QUARANTINE}: no quarantine directory found')
+        notes.append("Kein _quarantine-Verzeichnis vorhanden.")
     else:
-        addon_dirs = [item for item in QUARANTINE.iterdir() if item.is_dir()]
-        if not addon_dirs:
-            validator.note(f'{QUARANTINE}: no quarantined addons found')
+        for addon_dir in sorted(p for p in QUARANTINE.iterdir() if p.is_dir()):
+            ok, message = restore_one(addon_dir)
+            (restored if ok else remaining).append(message)
+            errors.extend(validator.ERRORS)
+            warnings.extend(validator.WARNINGS)
+            notes.extend(validator.NOTES)
+            if not ok and not validator.ERRORS:
+                errors.append(message)
 
-        for addon_dir in sorted(addon_dirs):
-            passed, addon_id = validate_quarantined_addon(addon_dir)
-            if passed:
-                target = restore(addon_dir, addon_id)
-                restored.append(target.relative_to(ROOT).as_posix())
-            else:
-                still_broken.append(addon_dir.relative_to(ROOT).as_posix())
+    lines = [
+        "Kodi Add-on restore report", "",
+        f"Restored: {len(restored)}",
+        f"Remaining in quarantine: {len(remaining)}",
+        f"Errors: {len(errors)}",
+        f"Warnings: {len(warnings)}", "",
+    ]
+    for title, items in (
+        ("RESTORED", restored), ("REMAINING", remaining),
+        ("ERRORS", errors), ("WARNINGS", warnings), ("NOTES", notes),
+    ):
+        if items:
+            lines += [title, "-" * 60, *[f"- {item}" for item in items], ""]
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(report.read_text(encoding="utf-8"))
+    return 1 if errors else 0
 
-    write_report(report_path, restored, still_broken)
-    print(report_path.read_text(encoding='utf-8'))
-    return 0
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:
-        report_path = Path(sys.argv[sys.argv.index('--report') + 1]) if '--report' in sys.argv else Path('kodi-addon-restore-report.txt')
-        report_path.write_text(
-            'Kodi addon restore report\n\n'
-            'UNEXPECTED SCRIPT ERROR\n'
-            f'{exc}\n',
-            encoding='utf-8',
-        )
-        print(f'Unexpected restore error: {exc}', file=sys.stderr)
-        raise SystemExit(1)
+        print(f"Unerwarteter Restore-Fehler: {exc}", file=sys.stderr)
+        raise SystemExit(2)
