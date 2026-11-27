@@ -291,22 +291,34 @@ def main() -> int:
     args = parser.parse_args()
     report = Path(args.report).resolve()
     quarantined: list[str] = []
+    all_errors: list[str] = []
+    all_warnings: list[str] = []
+    all_notes: list[str] = []
 
     if not ADDONS.is_dir():
-        note(f"{ADDONS}: addons-Verzeichnis fehlt; nichts zu prüfen")
+        all_notes.append(f"{ADDONS}: addons-Verzeichnis fehlt; nichts zu prüfen")
     else:
         addon_dirs = sorted(p for p in ADDONS.iterdir() if p.is_dir())
         if not addon_dirs:
-            note("Keine Add-on-Quellordner vorhanden")
+            all_notes.append("Keine Add-on-Quellordner vorhanden")
         for addon_dir in addon_dirs:
             passed = validate_addon(addon_dir)
+            current_errors = list(ERRORS)
+            current_warnings = list(WARNINGS)
+            current_notes = list(NOTES)
             if not passed and args.quarantine:
                 moved = quarantine_addon(addon_dir)
                 if moved:
                     quarantined.append(moved.relative_to(ROOT).as_posix())
-            # Keep findings from all add-ons in the final report.
-            # validate_addon resets the lists, so collect each result below.
+                else:
+                    current_errors.extend(ERRORS[len(current_errors):])
+            all_errors.extend(current_errors)
+            all_warnings.extend(current_warnings)
+            all_notes.extend(current_notes)
 
+    ERRORS[:] = all_errors
+    WARNINGS[:] = all_warnings
+    NOTES[:] = all_notes
     write_report(report, quarantined)
     print(report.read_text(encoding="utf-8"))
     return 1 if ERRORS else 0
