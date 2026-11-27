@@ -10,6 +10,7 @@ on:
       - '.github/scripts/restore_kodi_addon.py'
       - '.github/scripts/test_kodi_addon_validation.py'
       - '.github/workflows/validate-kodi-addon.yml'
+      - '.github/workflows/restore-kodi-addons.yml'
       - '.github/trigger/validate-kodi-addons.txt'
   pull_request:
     paths:
