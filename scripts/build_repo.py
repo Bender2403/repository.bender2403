@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Build the Kodi repository in the root and a compatibility GitHub Pages site."""
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from xml.etree import ElementTree as ET
 import hashlib
 import base64
 import json
 import urllib.parse
 import shutil
-import tempfile
 import urllib.request
 import zipfile
+
+from zip_safety import UnsafeAddonZip, extract_addon_zip
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / "addons"
@@ -85,52 +86,20 @@ def publish_external_zip(item):
         payload = json.loads(response.read().decode("utf-8"))
     if payload.get("encoding") != "base64" or not payload.get("content"):
         raise SystemExit(f"GitHub hat keinen Base64-Dateiinhalt für {filename} geliefert")
-    archive_bytes = base64.b64decode(payload["content"])
+    try:
+        archive_bytes = base64.b64decode(payload["content"], validate=True)
+        addon_xml = extract_addon_zip(
+            archive_bytes, ROOT, item["addon_id"], item["version"]
+        )
+    except (ValueError, UnsafeAddonZip) as exc:
+        raise SystemExit(f"{item['addon_id']}: unsicheres oder ungültiges ZIP: {exc}") from exc
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        archive_path = Path(temp_dir) / "source.zip"
-        archive_path.write_bytes(archive_bytes)
-        with zipfile.ZipFile(archive_path) as zf:
-            members = [name for name in zf.namelist() if name.lower().endswith("/addon.xml") or name.lower() == "addon.xml"]
-            if len(members) != 1:
-                raise SystemExit(f"{item['addon_id']}: ZIP enthält nicht genau eine addon.xml")
-            addon_member = members[0]
-            prefix = addon_member[:-len("addon.xml")]
-            addon_root = ET.fromstring(zf.read(addon_member))
-            actual_id = addon_root.attrib.get("id")
-            actual_version = addon_root.attrib.get("version")
-            if actual_id != item["addon_id"] or actual_version != item["version"]:
-                raise SystemExit(
-                    f"Unerwartete ZIP-Metadaten: erwartet {item['addon_id']} {item['version']}, "
-                    f"gefunden {actual_id} {actual_version}"
-                )
-
-            target = ROOT / actual_id
-            if target.exists():
-                shutil.rmtree(target)
-            target.mkdir(parents=True)
-
-            # Copy the add-on files from the ZIP while stripping its top-level folder.
-            for info in zf.infolist():
-                if info.is_dir():
-                    continue
-                member_path = PurePosixPath(info.filename)
-                if not info.filename.startswith(prefix):
-                    continue
-                relative = member_path.relative_to(PurePosixPath(prefix.rstrip("/"))) if prefix else member_path
-                if not relative.parts or ".." in relative.parts:
-                    raise SystemExit(f"Unsicherer ZIP-Pfad in {item['addon_id']}: {info.filename}")
-                destination = target.joinpath(*relative.parts)
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                destination.write_bytes(zf.read(info.filename))
-
-        archive_name = f"{item['addon_id']}-{item['version']}.zip"
-        (target / archive_name).write_bytes(archive_bytes)
-
+    archive_name = f"{item['addon_id']}-{item['version']}.zip"
+    target = ROOT / item["addon_id"]
     legacy_zip_dir = SITE / "zips" / item["addon_id"]
     legacy_zip_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(target / archive_name, legacy_zip_dir / archive_name)
-    all_addons.append(ET.tostring(addon_root, encoding="unicode"))
+    all_addons.append(addon_xml)
     generated_dirs.append(item["addon_id"])
 
 
@@ -177,6 +146,10 @@ for source in sorted(p for p in SOURCES.iterdir() if p.is_dir()):
     generated_dirs.append(addon_id)
 
 for item in EXTERNAL_ZIPS:
+    if item["addon_id"] in generated_dirs:
+        raise SystemExit(
+            f"Doppelte Add-on-ID {item['addon_id']}: Quell-Add-on und EXTERNAL_ZIPS kollidieren"
+        )
     publish_external_zip(item)
 
 if not all_addons:
