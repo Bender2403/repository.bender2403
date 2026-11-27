@@ -96,6 +96,11 @@ class SafeZipTests(unittest.TestCase):
         source = (ROOT / "scripts" / "build_repo.py").read_text(encoding="utf-8")
         ast.parse(source, filename="scripts/build_repo.py")
 
+    def test_compressed_archive_size_limit_is_enforced(self) -> None:
+        with patch.object(zip_safety, "MAX_ARCHIVE_SIZE", 1):
+            with self.assertRaises(UnsafeAddonZip):
+                extract_addon_zip(self.valid_archive(), self.root, ADDON_ID, "1.0.0")
+
     def test_file_size_limit_is_enforced(self) -> None:
         archive = make_zip([
             (f"{ADDON_ID}/addon.xml", ADDON_XML, None),
