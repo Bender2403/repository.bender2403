@@ -21,6 +21,8 @@ Versionsnummern des Repository-Add-ons entsprechen den Versionen in
 - ZIP-Inhalte werden zunächst in einem Staging-Ordner entpackt und das Veröffentlichungsverzeichnis erst nach erfolgreicher Prüfung atomar ersetzt.
 - Komprimierte ZIP-Dateien sind zusätzlich auf 50 MiB begrenzt; lokale Add-on-Ausgaben werden ebenfalls staged und atomar ersetzt, Symlinks im Quellordner abgelehnt.
 - Kollisionen zwischen Add-on-Quellordnern und `EXTERNAL_ZIPS` werden erkannt; ZIP-Sicherheits-Regressionstests laufen vor Veröffentlichung.
+- Offiziellen Kodi-Addon-Checker für Nexus, Omega und Piers ergänzt; jede Zielversion erhält einen eigenen Bericht.
+- Kodi-Kompatibilitätsprüfung läuft sowohl bei Add-on-Validierungen als auch als Pflichtprüfung vor dem Repository-Build und der Veröffentlichung.
 
 ## [1.0.1] - 2026-11-06
 

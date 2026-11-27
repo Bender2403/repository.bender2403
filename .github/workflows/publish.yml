@@ -25,9 +25,24 @@ jobs:
       - name: Python einrichten
         uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.12"
       - name: ZIP-Sicherheits- und Validator-Regressionstests
         run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
+      - name: Offiziellen Kodi-Addon-Checker installieren
+        run: python3 -m pip install 'kodi-addon-checker==0.0.36'
+      - name: Kodi 20 Nexus, Kodi 21 Omega und Kodi 22 Piers prüfen
+        run: |
+          python3 .github/scripts/check_kodi_versions.py \
+            --addons-dir addons \
+            --report-dir "${{ runner.temp }}/kodi-compatibility-reports"
+      - name: Kodi-Kompatibilitätsberichte hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kodi-version-compatibility-reports
+          path: ${{ runner.temp }}/kodi-compatibility-reports/*.txt
+          if-no-files-found: warn
+          retention-days: 14
       - name: Kodi-Repository-Dateien bauen
         env:
           SOURCE_REPO_TOKEN: ${{ secrets.SOURCE_REPO_TOKEN }}

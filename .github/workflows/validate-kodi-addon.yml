@@ -8,6 +8,8 @@ on:
       - 'addons/**'
       - 'scripts/build_repo.py'
       - 'scripts/zip_safety.py'
+      - '.github/scripts/check_kodi_versions.py'
+      - '.github/scripts/test_kodi_version_compatibility.py'
       - '.github/scripts/test_zip_safety.py'
       - '.github/scripts/validate_kodi_addon.py'
       - '.github/scripts/restore_kodi_addon.py'
@@ -20,6 +22,8 @@ on:
       - 'addons/**'
       - 'scripts/build_repo.py'
       - 'scripts/zip_safety.py'
+      - '.github/scripts/check_kodi_versions.py'
+      - '.github/scripts/test_kodi_version_compatibility.py'
       - '.github/scripts/test_zip_safety.py'
       - '.github/scripts/validate_kodi_addon.py'
       - '.github/scripts/restore_kodi_addon.py'
@@ -37,9 +41,9 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate addon sources
+    name: Validate addon sources and Kodi compatibility
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -100,12 +104,31 @@ jobs:
             echo 'Validation trigger is not present.'
           fi
 
+      - name: Install official Kodi add-on checker
+        run: python3 -m pip install 'kodi-addon-checker==0.0.36'
+
+      - name: Check Kodi 20 Nexus, Kodi 21 Omega and Kodi 22 Piers
+        id: kodi_compatibility
+        run: |
+          python3 .github/scripts/check_kodi_versions.py \
+            --addons-dir addons \
+            --report-dir "${{ runner.temp }}/kodi-compatibility-reports"
+
       - name: Upload validation report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: kodi-addon-validation-report
           path: ${{ runner.temp }}/kodi-addon-validation.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload Kodi version compatibility reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kodi-version-compatibility-reports
+          path: ${{ runner.temp }}/kodi-compatibility-reports/*.txt
           if-no-files-found: warn
           retention-days: 14
 
