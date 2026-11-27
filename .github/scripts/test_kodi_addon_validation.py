@@ -25,6 +25,7 @@ def write_plugin(folder: Path, *, library: str = "default.py", source: str = "pa
 
 
 class ValidatorTests(unittest.TestCase):
+    """Regression coverage for the validator and restore path."""
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
