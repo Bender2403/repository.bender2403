@@ -3,10 +3,13 @@
 from pathlib import Path
 from xml.etree import ElementTree as ET
 import hashlib
+import os
 import base64
 import json
 import urllib.parse
 import shutil
+import tempfile
+import uuid
 import urllib.request
 import zipfile
 
@@ -119,24 +122,50 @@ for source in sorted(p for p in SOURCES.iterdir() if p.is_dir()):
     target = ROOT / addon_id
     if target == SOURCES or target == ROOT / ".github":
         raise SystemExit(f"Ungültiger Ausgabeordner: {target}")
-    if target.exists():
-        shutil.rmtree(target)
-    target.mkdir(parents=True)
+    if target.is_symlink() or (target.exists() and not target.is_dir()):
+        raise SystemExit(f"Ungültiges Veröffentlichungsziel: {target}")
 
-    files = []
-    for file in sorted(source.rglob("*")):
-        if not file.is_file() or "__pycache__" in file.parts or file.suffix == ".pyc":
-            continue
-        relative = file.relative_to(source)
-        destination = target / relative
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(file, destination)
-        files.append((destination, Path(addon_id) / relative))
+    stage = Path(tempfile.mkdtemp(prefix=".addon-build-", dir=ROOT))
+    backup = ROOT / f".{addon_id}.backup-{uuid.uuid4().hex}"
+    moved_old = False
+    try:
+        files = []
+        for file in sorted(source.rglob("*")):
+            if file.is_symlink():
+                raise SystemExit(f"Symlink im Add-on-Quellordner ist nicht erlaubt: {file}")
+            if not file.is_file() or "__pycache__" in file.parts or file.suffix == ".pyc":
+                continue
+            relative = file.relative_to(source)
+            destination = stage / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(file, destination)
+            files.append((destination, Path(addon_id) / relative))
 
-    archive = target / f"{addon_id}-{version}.zip"
-    with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
-        for file, archive_name in files:
-            zf.write(file, archive_name)
+        archive = stage / f"{addon_id}-{version}.zip"
+        with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
+            for file, archive_name in files:
+                zf.write(file, archive_name)
+
+        if target.exists():
+            os.replace(target, backup)
+            moved_old = True
+        try:
+            os.replace(stage, target)
+        except Exception:
+            if moved_old and backup.exists():
+                os.replace(backup, target)
+                moved_old = False
+            raise
+        if moved_old:
+            shutil.rmtree(backup)
+            moved_old = False
+    finally:
+        if stage.exists():
+            shutil.rmtree(stage, ignore_errors=True)
+        if moved_old and backup.exists() and not target.exists():
+            os.replace(backup, target)
+        elif backup.exists():
+            shutil.rmtree(backup, ignore_errors=True)
 
     legacy_zip_dir = SITE / "zips" / addon_id
     legacy_zip_dir.mkdir(parents=True, exist_ok=True)
