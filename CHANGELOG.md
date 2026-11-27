@@ -10,7 +10,7 @@ Versionsnummern des Repository-Add-ons entsprechen den Versionen in
 
 ### Hinzugefügt
 
-- ZIP-Eingangsordner unter `arbeitsordner/eingang/`; ungültige oder kollidierende ZIPs werden einzeln nach `arbeitsordner/quarantaene/` verschoben und mit einem Fehlerbericht versehen.
+- ZIP-Eingangsordner unter `arbeitsordner/eingang/`; ungültige oder kollidierende ZIPs werden einzeln nach `arbeitsordner/quarantaene/` verschoben. Der Fehlerbericht wird unter der Add-on-ID als `.txt` gespeichert; danach wird die ZIP gelöscht. Ist keine ID lesbar, wird der ZIP-Dateiname als Fallback verwendet. Kann der Bericht nicht geschrieben werden, bleibt die ZIP zur Fehlerbehebung erhalten.
 - Gültige Eingangs-ZIPs werden nach Sicherheitsprüfung übernommen; erfolgreich veröffentlichte Eingangsdateien werden entfernt.
 
 ### Entfernt

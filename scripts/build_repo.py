@@ -14,6 +14,7 @@ import urllib.request
 import zipfile
 
 from zip_safety import UnsafeAddonZip, extract_addon_zip
+from zip_intake import quarantine_and_report
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / "addons"
@@ -112,6 +113,7 @@ QUARANTINE.mkdir(parents=True, exist_ok=True)
 source_ids = set(generated_dirs)
 incoming = []
 for zip_path in sorted(INBOX.glob("*.zip")):
+    addon_id = None
     try:
         archive_bytes = zip_path.read_bytes()
         if len(archive_bytes) > 50 * 1024 * 1024:
@@ -132,17 +134,13 @@ for zip_path in sorted(INBOX.glob("*.zip")):
             inspect_addon_zip(archive, addon_id, version)
         incoming.append((zip_path, archive_bytes, addon_id, version))
     except (OSError, ValueError, ET.ParseError, UnicodeError, zipfile.BadZipFile, RuntimeError) as exc:
-        destination = QUARANTINE / zip_path.name
-        counter = 1
-        while destination.exists():
-            destination = QUARANTINE / f"{zip_path.stem}-{counter}{zip_path.suffix}"
-            counter += 1
-        shutil.move(str(zip_path), destination)
-        (destination.with_suffix(destination.suffix + ".reason.txt")).write_text(
-            f"Datei: {zip_path.name}\nFehler: {exc}\n", encoding="utf-8"
-        )
-        print(f"QUARANTÄNE: {zip_path.name}: {exc}")
-        
+        try:
+            report = quarantine_and_report(zip_path, QUARANTINE, addon_id, exc)
+            print(f"QUARANTÄNE: {zip_path.name}; Fehlerbericht: {report.name}")
+        except OSError as report_error:
+            print(f"QUARANTÄNE-FEHLER: {zip_path.name}: Fehlerbericht konnte nicht sicher erstellt werden: {report_error}")
+
+
 # Reject all ZIPs involved in an ID collision (including collisions with addons/).
 from collections import Counter
 counts = Counter(item[2] for item in incoming)
@@ -167,16 +165,12 @@ for zip_path, archive_bytes, addon_id, version in incoming:
         zip_path.unlink()
         print(f"ZIP übernommen: {zip_path.name} -> {addon_id} {version}")
     except (OSError, ValueError, zipfile.BadZipFile, RuntimeError) as exc:
-        destination = QUARANTINE / zip_path.name
-        counter = 1
-        while destination.exists():
-            destination = QUARANTINE / f"{zip_path.stem}-{counter}{zip_path.suffix}"
-            counter += 1
-        shutil.move(str(zip_path), destination)
-        (destination.with_suffix(destination.suffix + ".reason.txt")).write_text(
-            f"Datei: {zip_path.name}\nFehler: {exc}\n", encoding="utf-8"
-        )
-        print(f"QUARANTÄNE: {zip_path.name}: {exc}")
+        try:
+            report = quarantine_and_report(zip_path, QUARANTINE, addon_id, exc)
+            print(f"QUARANTÄNE: {zip_path.name}; Fehlerbericht: {report.name}")
+        except OSError as report_error:
+            print(f"QUARANTÄNE-FEHLER: {zip_path.name}: Fehlerbericht konnte nicht sicher erstellt werden: {report_error}")
+
 
 if not all_addons:
     raise SystemExit("Keine Add-ons in addons/ gefunden.")
