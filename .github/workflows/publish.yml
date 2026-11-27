@@ -26,6 +26,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - name: ZIP-Sicherheits- und Validator-Regressionstests
+        run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
       - name: Kodi-Repository-Dateien bauen
         env:
           SOURCE_REPO_TOKEN: ${{ secrets.SOURCE_REPO_TOKEN }}
