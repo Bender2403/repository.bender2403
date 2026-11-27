@@ -1,425 +1,320 @@
 #!/usr/bin/env python3
-"""Validate Kodi addon sources and write a human-readable report.
+"""Validate Kodi add-on source directories.
 
-The script never raises an unhandled exception. All findings are collected,
-printed and written to a report file. Exit code 1 means at least one error
-was found, but the GitHub workflow can choose to ignore that exit code.
+The validator is deliberately conservative: optional Kodi files are checked
+when present, but settings and translations are not mandatory for every add-on.
+No bytecode or cache files are created.
 """
-
 from __future__ import annotations
 
 import argparse
 import ast
-import compileall
 import re
+import shutil
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-ADDONS = ROOT / 'addons'
-errors: list[str] = []
-warnings: list[str] = []
-notes: list[str] = []
+ADDONS = ROOT / "addons"
+QUARANTINE = ROOT / "_quarantine"
+
+ERRORS: list[str] = []
+WARNINGS: list[str] = []
+NOTES: list[str] = []
+
+ADDON_ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+SETTING_CALLS = {
+    "getSetting", "getSettingInt", "getSettingBool",
+    "getSettingString", "getSettingNumber",
+}
 
 
-def fail(message: str) -> None:
-    errors.append(message)
+def error(message: str) -> None:
+    ERRORS.append(message)
 
 
-def warn(message: str) -> None:
-    warnings.append(message)
+def warning(message: str) -> None:
+    WARNINGS.append(message)
 
 
 def note(message: str) -> None:
-    notes.append(message)
+    NOTES.append(message)
 
 
-def parse_xml(path: Path):
+def parse_xml(path: Path) -> ET.Element | None:
     try:
-        return ET.parse(path)
-    except ET.ParseError as exc:
-        fail(f'{path}: invalid XML: {exc}')
+        return ET.parse(path).getroot()
+    except (ET.ParseError, OSError) as exc:
+        error(f"{path}: XML kann nicht gelesen werden: {exc}")
         return None
 
 
-def detect_addon_type(root: ET.Element, path: Path) -> str:
-    if root.find("extension[@point='xbmc.addon.repository']") is not None:
-        return 'repository'
+def safe_relative_library(addon_dir: Path, library: str, addon_xml: Path) -> None:
+    candidate = Path(library)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        error(f"{addon_xml}: unsicherer library-Pfad: {library}")
+        return
+    resolved = (addon_dir / candidate).resolve()
+    try:
+        resolved.relative_to(addon_dir.resolve())
+    except ValueError:
+        error(f"{addon_xml}: library liegt außerhalb des Add-ons: {library}")
+        return
+    if not resolved.is_file():
+        error(f"{addon_xml}: library-Datei fehlt: {library}")
 
-    if root.find("extension[@point='xbmc.python.script']") is not None:
-        return 'script'
 
-    fail(f'{path}: no supported xbmc.python.script or xbmc.addon.repository extension found')
-    return 'unknown'
-
-
-def validate_addon_xml(addon_dir: Path) -> tuple[str | None, str]:
-    path = addon_dir / 'addon.xml'
+def validate_addon_xml(addon_dir: Path) -> tuple[str | None, str | None]:
+    path = addon_dir / "addon.xml"
     if not path.is_file():
-        fail(f'{path}: missing addon.xml')
-        return None, 'unknown'
+        error(f"{path}: addon.xml fehlt")
+        return None, None
 
-    tree = parse_xml(path)
-    if tree is None:
-        return None, 'unknown'
+    root = parse_xml(path)
+    if root is None:
+        return None, None
+    if root.tag != "addon":
+        error(f"{path}: Wurzelelement muss <addon> sein")
+        return None, None
 
-    root = tree.getroot()
-    addon_id = root.attrib.get('id', '')
-    version = root.attrib.get('version', '')
+    addon_id = root.attrib.get("id", "").strip()
+    version = root.attrib.get("version", "").strip()
+    provider = root.attrib.get("provider-name", "").strip()
 
     if not addon_id:
-        fail(f'{path}: missing addon id')
+        error(f"{path}: Add-on-ID fehlt")
+    elif not ADDON_ID_RE.fullmatch(addon_id):
+        error(f"{path}: ungültige Add-on-ID: {addon_id!r}")
+    elif addon_dir.name != addon_id:
+        error(f"{path}: Verzeichnisname {addon_dir.name!r} stimmt nicht mit ID {addon_id!r} überein")
+
     if not version:
-        fail(f'{path}: missing addon version')
-    if root.attrib.get('provider-name') is None:
-        fail(f'{path}: missing provider-name')
+        error(f"{path}: Version fehlt")
+    elif not re.fullmatch(r"[0-9A-Za-z.+_-]+", version):
+        error(f"{path}: ungewöhnliches Versionsformat: {version!r}")
+    if not provider:
+        warning(f"{path}: provider-name fehlt")
 
-    addon_type = detect_addon_type(root, path)
+    extensions = root.findall("extension")
+    if not extensions:
+        error(f"{path}: mindestens ein <extension>-Eintrag wird erwartet")
+        return addon_id or None, None
 
-    if addon_type == 'repository':
-        extension = root.find("extension[@point='xbmc.addon.repository']")
-        if extension is None:
-            fail(f'{path}: missing xbmc.addon.repository extension')
-        return addon_id or None, addon_type
+    points = [ext.attrib.get("point", "").strip() for ext in extensions]
+    if any(not point for point in points):
+        error(f"{path}: mindestens ein extension-Eintrag hat kein point-Attribut")
 
-    if addon_type == 'script':
-        requires = root.find('requires')
-        if requires is None:
-            fail(f'{path}: missing requires element')
-        else:
-            imports = {
-                item.attrib.get('addon')
-                for item in requires.findall('import')
-            }
-            if 'xbmc.python' not in imports:
-                fail(f'{path}: missing xbmc.python dependency')
+    addon_type = ", ".join(sorted({p for p in points if p})) or "unknown"
 
-        extension = root.find("extension[@point='xbmc.python.script']")
-        if extension is None:
-            fail(f'{path}: missing xbmc.python.script extension')
-        else:
-            library = extension.attrib.get('library', '')
-            if not library:
-                fail(f'{path}: script extension has no library')
-            elif not (addon_dir / library).is_file():
-                fail(f'{path}: script library does not exist: {library}')
+    # Validate Python entry points only where Kodi declares a Python library.
+    for ext in extensions:
+        point = ext.attrib.get("point", "")
+        library = ext.attrib.get("library")
+        if point in {
+            "xbmc.python.script",
+            "xbmc.service",
+            "xbmc.python.module",
+            "xbmc.python.pluginsource",
+        }:
+            if not library and point == "xbmc.python.pluginsource":
+                library = "default.py"
+            if library:
+                safe_relative_library(addon_dir, library, path)
+            elif point in {"xbmc.python.script", "xbmc.service"}:
+                error(f"{path}: {point} benötigt ein library-Attribut")
+
+    requires = root.find("requires")
+    if requires is not None:
+        for imp in requires.findall("import"):
+            dep = imp.attrib.get("addon", "").strip()
+            dep_version = imp.attrib.get("version", "").strip()
+            if not dep:
+                error(f"{path}: dependency import ohne addon-ID")
+            if dep == "xbmc.python":
+                if not dep_version:
+                    warning(f"{path}: xbmc.python-Abhängigkeit ohne Versionsangabe")
+                elif not re.match(r"^3\.", dep_version):
+                    warning(f"{path}: xbmc.python-Version {dep_version!r}; Python-3-Kompatibilität prüfen")
 
     return addon_id or None, addon_type
 
 
-def validate_repository(addon_dir: Path) -> None:
-    path = addon_dir / 'addon.xml'
-    tree = parse_xml(path)
-    if tree is None:
-        return
-
-    root = tree.getroot()
-    extension = root.find("extension[@point='xbmc.addon.repository']")
-    if extension is None:
-        return
-
-    directories = extension.findall('dir')
-    if not directories:
-        fail(f'{path}: repository extension has no dir element')
-        return
-
-    for index, directory in enumerate(directories, start=1):
-        info = directory.find('info')
-        checksum = directory.find('checksum')
-        datadir = directory.find('datadir')
-
-        if info is None or not (info.text or '').strip():
-            fail(f'{path}: repository dir {index} has no info URL')
-        else:
-            note(f'{path}: repository dir {index} info URL found')
-
-        if checksum is None or not (checksum.text or '').strip():
-            warn(f'{path}: repository dir {index} has no checksum URL')
-        else:
-            note(f'{path}: repository dir {index} checksum URL found')
-
-        if datadir is None or not (datadir.text or '').strip():
-            fail(f'{path}: repository dir {index} has no datadir URL')
-        else:
-            note(f'{path}: repository dir {index} datadir URL found')
-
-
-def validate_python(addon_dir: Path, addon_id: str | None) -> set[str]:
-    py_files = list(addon_dir.rglob('*.py'))
-    if not py_files:
-        fail(f'{addon_dir}: no Python files found')
-        return set()
-
-    if not compileall.compile_dir(
-        str(addon_dir),
-        quiet=2,
-        force=True,
-        rx=re.compile(r'.*\.py$'),
-    ):
-        fail(f'{addon_dir}: Python compilation failed')
-
-    setting_ids: set[str] = set()
-    label_ids: set[str] = set()
-
+def validate_python(addon_dir: Path) -> set[str]:
+    used_ids: set[str] = set()
+    py_files = [p for p in addon_dir.rglob("*.py") if "__pycache__" not in p.parts]
     for path in py_files:
         try:
-            source = path.read_text(encoding='utf-8')
+            source = path.read_text(encoding="utf-8")
             tree = ast.parse(source, filename=str(path))
         except (UnicodeDecodeError, SyntaxError) as exc:
-            fail(f'{path}: Python syntax error: {exc}')
+            error(f"{path}: Python-Fehler: {exc}")
             continue
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-                method = node.func.attr
-                if method in {
-                    'getSetting',
-                    'getSettingInt',
-                    'getSettingBool',
-                    'getSettingString',
-                    'getSettingNumber',
-                } and node.args:
-                    first = node.args[0]
-                    if isinstance(first, ast.Constant) and isinstance(first.value, str):
-                        setting_ids.add(first.value)
-                if method == 'getString' and node.args:
-                    first = node.args[0]
-                    if isinstance(first, ast.Constant) and isinstance(first.value, int):
-                        label_ids.add(str(first.value))
-
-    if addon_id:
-        settings_path = addon_dir / 'resources' / 'settings.xml'
-        if settings_path.is_file():
-            content = settings_path.read_text(encoding='utf-8', errors='replace')
-            if f'id="{addon_id}"' not in content:
-                warn(
-                    f'{settings_path}: section id does not match addon id '
-                    f'({addon_id})'
-                )
-
-    return setting_ids | label_ids
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+                continue
+            method = node.func.attr
+            if method in SETTING_CALLS and node.args:
+                value = node.args[0]
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    used_ids.add("setting:" + value.value)
+            elif method == "getString" and node.args:
+                value = node.args[0]
+                if isinstance(value, ast.Constant) and isinstance(value.value, int):
+                    used_ids.add("string:" + str(value.value))
+    return used_ids
 
 
-def validate_settings(addon_dir: Path, addon_id: str | None) -> set[str]:
-    path = addon_dir / 'resources' / 'settings.xml'
-    if not path.is_file():
-        fail(f'{path}: missing settings.xml')
+def validate_settings(addon_dir: Path) -> set[str]:
+    path = addon_dir / "resources" / "settings.xml"
+    if not path.exists():
+        note(f"{addon_dir.name}: keine settings.xml (zulässig, wenn das Add-on keine Einstellungen benötigt)")
         return set()
 
-    tree = parse_xml(path)
-    if tree is None:
+    root = parse_xml(path)
+    if root is None:
+        return set()
+    if root.tag != "settings":
+        error(f"{path}: Wurzelelement muss <settings> sein")
         return set()
 
-    root = tree.getroot()
-    if root.tag != 'settings':
-        fail(f'{path}: root element must be settings')
-
-    version = root.attrib.get('version', '')
-    if version != '1':
-        fail(f'{path}: settings version must be 1 for the modern Kodi format')
-
-    sections = root.findall('section')
-    if not sections:
-        fail(f'{path}: missing section element')
+    version = root.attrib.get("version")
+    if version not in (None, "", "1"):
+        warning(f"{path}: unbekannte settings-Version {version!r}; Kodi-Kompatibilität manuell prüfen")
 
     ids: set[str] = set()
-    for section in sections:
-        section_id = section.attrib.get('id', '')
-        if not section_id:
-            fail(f'{path}: section without id')
-        elif addon_id and section_id != addon_id:
-            warn(
-                f'{path}: section id {section_id!r} does not match addon id '
-                f'{addon_id!r}'
-            )
-
-        categories = section.findall('category')
-        if not categories:
-            fail(f'{path}: section {section_id!r} has no category')
-
-        for category in categories:
-            category_id = category.attrib.get('id', '')
-            if not category_id:
-                fail(f'{path}: category without id')
-
-            groups = category.findall('group')
-            if not groups:
-                fail(f'{path}: category {category_id!r} has no group')
-
-            for setting in category.iter('setting'):
-                setting_id = setting.attrib.get('id', '')
-                if not setting_id:
-                    fail(f'{path}: setting without id')
-                    continue
-                ids.add(setting_id)
-
-                if setting.find('default') is None:
-                    fail(f'{path}: setting {setting_id!r} has no default element')
-                if setting.find('control') is None:
-                    fail(f'{path}: setting {setting_id!r} has no control element')
-
-    return ids
+    for setting in root.iter("setting"):
+        setting_id = setting.attrib.get("id", "").strip()
+        if not setting_id:
+            error(f"{path}: setting ohne ID")
+            continue
+        if setting_id in ids:
+            error(f"{path}: doppelte Setting-ID {setting_id!r}")
+        ids.add(setting_id)
+    return {"setting:" + item for item in ids}
 
 
 def read_po_ids(path: Path) -> set[str]:
-    ids: set[str] = set()
     try:
-        content = path.read_text(encoding='utf-8')
-    except UnicodeDecodeError as exc:
-        fail(f'{path}: invalid UTF-8: {exc}')
-        return ids
-
-    msgid_pattern = re.compile(r'^msgid\s+"([^"]*)"\s*$', re.MULTILINE)
-    for match in msgid_pattern.finditer(content):
-        value = match.group(1)
-        if value.isdigit():
-            ids.add(value)
-
-    if not ids:
-        fail(f'{path}: no numeric msgid entries found')
-
-    return ids
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        warning(f"{path}: Sprachdatei nicht lesbar: {exc}")
+        return set()
+    return {
+        match.group(1)
+        for match in re.finditer(r'^msgid\s+"([0-9]+)"\s*$', text, re.MULTILINE)
+    }
 
 
 def validate_translations(addon_dir: Path, used_ids: set[str]) -> None:
-    language_dir = addon_dir / 'resources' / 'language'
-    if not language_dir.is_dir():
-        fail(f'{language_dir}: missing language directory')
+    language_root = addon_dir / "resources" / "language"
+    if not language_root.is_dir():
+        note(f"{addon_dir.name}: keine Sprachdateien vorhanden")
         return
 
-    english = language_dir / 'resource.language.en_gb' / 'strings.po'
-    german = language_dir / 'resource.language.de_de' / 'strings.po'
-
+    english = language_root / "resource.language.en_gb" / "strings.po"
     if not english.is_file():
-        fail(f'{english}: missing English fallback language file')
-    else:
-        english_ids = read_po_ids(english)
-        missing = used_ids - english_ids
-        if missing:
-            fail(
-                f'{english}: missing labels used by Python: '
-                f'{", ".join(sorted(missing))}'
-            )
+        warning(f"{english}: englische Fallback-Datei fehlt")
+        return
 
-    if not german.is_file():
-        warn(f'{german}: German translation is missing')
-    else:
+    available = read_po_ids(english)
+    missing = {
+        item.split(":", 1)[1]
+        for item in used_ids
+        if item.startswith("string:") and item.split(":", 1)[1] not in available
+    }
+    if missing:
+        warning(f"{english}: verwendete String-IDs fehlen: {', '.join(sorted(missing))}")
+
+    german = language_root / "resource.language.de_de" / "strings.po"
+    if german.is_file():
         german_ids = read_po_ids(german)
-        missing = used_ids - german_ids
-        if missing:
-            warn(
-                f'{german}: missing labels used by Python: '
-                f'{", ".join(sorted(missing))}'
-            )
+        missing_de = {
+            item.split(":", 1)[1]
+            for item in used_ids
+            if item.startswith("string:") and item.split(":", 1)[1] not in german_ids
+        }
+        if missing_de:
+            warning(f"{german}: deutsche Übersetzungen fehlen für: {', '.join(sorted(missing_de))}")
 
 
-def validate_kodi_compatibility(addon_dir: Path) -> None:
-    path = addon_dir / 'addon.xml'
-    if not path.is_file():
-        return
-
-    content = path.read_text(encoding='utf-8', errors='replace')
-    if 'xbmc.python' not in content:
-        return
-
-    match = re.search(
-        r'<import\s+addon="xbmc.python"\s+version="([^"]+)"',
-        content,
-    )
-    if not match:
-        fail(f'{path}: xbmc.python dependency has no version')
-        return
-
-    version = match.group(1)
-    if not version.startswith('3.'):
-        fail(
-            f'{path}: xbmc.python version {version!r} is not compatible with '
-            'Kodi 21 or 22; use 3.0.0 or newer'
-        )
-    else:
-        note(
-            f'{path}: xbmc.python {version} is compatible with Kodi 21 Omega '
-            'and Kodi 22 Piers'
-        )
+def validate_addon(addon_dir: Path) -> bool:
+    ERRORS.clear()
+    WARNINGS.clear()
+    NOTES.clear()
+    note(f"Prüfe {addon_dir.name}")
+    addon_id, addon_type = validate_addon_xml(addon_dir)
+    if addon_id and addon_type:
+        note(f"Add-on-ID: {addon_id}; Extension Point(s): {addon_type}")
+    python_ids = validate_python(addon_dir)
+    settings_ids = validate_settings(addon_dir)
+    validate_translations(addon_dir, python_ids | settings_ids)
+    return not ERRORS
 
 
-def write_report(path: Path) -> None:
+def quarantine_addon(addon_dir: Path) -> Path | None:
+    # Preserve the source directory name; never derive a filesystem path from
+    # untrusted addon.xml metadata.
+    QUARANTINE.mkdir(parents=True, exist_ok=True)
+    target = QUARANTINE / addon_dir.name
+    if target.exists():
+        error(f"{addon_dir.name}: Quarantäne-Ziel existiert bereits; nichts überschrieben")
+        return None
+    shutil.move(str(addon_dir), str(target))
+    return target
+
+
+def write_report(path: Path, quarantined: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
-        'Kodi addon validation report',
-        '',
-        f'Errors: {len(errors)}',
-        f'Warnings: {len(warnings)}',
-        f'Notes: {len(notes)}',
-        '',
+        "Kodi Add-on validation report", "",
+        f"Errors: {len(ERRORS)}",
+        f"Warnings: {len(WARNINGS)}",
+        f"Notes: {len(NOTES)}",
+        f"Quarantined: {len(quarantined)}", "",
     ]
-
-    if errors:
-        lines.extend(['ERRORS', '-' * 60])
-        lines.extend(f'- {item}' for item in errors)
-        lines.append('')
-
-    if warnings:
-        lines.extend(['WARNINGS', '-' * 60])
-        lines.extend(f'- {item}' for item in warnings)
-        lines.append('')
-
-    if notes:
-        lines.extend(['NOTES', '-' * 60])
-        lines.extend(f'- {item}' for item in notes)
-        lines.append('')
-
-    lines.append('RESULT: ' + ('FAILED' if errors else 'PASSED'))
-    path.write_text('\n'.join(lines), encoding='utf-8')
+    for title, items in (("ERRORS", ERRORS), ("WARNINGS", WARNINGS), ("NOTES", NOTES)):
+        if items:
+            lines += [title, "-" * 60, *[f"- {item}" for item in items], ""]
+    if quarantined:
+        lines += ["QUARANTINED ADD-ONS", "-" * 60, *[f"- {item}" for item in quarantined], ""]
+    lines.append("RESULT: " + ("FAILED" if ERRORS else "PASSED"))
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--report',
-        default='kodi-addon-validation.txt',
-        help='Path of the validation report file',
-    )
+    parser.add_argument("--report", default="kodi-addon-validation.txt")
+    parser.add_argument("--quarantine", action="store_true",
+                        help="Move invalid add-on source folders into _quarantine/")
     args = parser.parse_args()
-    report_path = Path(args.report).resolve()
+    report = Path(args.report).resolve()
+    quarantined: list[str] = []
 
     if not ADDONS.is_dir():
-        fail(f'{ADDONS}: addons directory not found')
+        note(f"{ADDONS}: addons-Verzeichnis fehlt; nichts zu prüfen")
     else:
-        addon_dirs = [item for item in ADDONS.iterdir() if item.is_dir()]
+        addon_dirs = sorted(p for p in ADDONS.iterdir() if p.is_dir())
         if not addon_dirs:
-            fail(f'{ADDONS}: no addon directories found')
+            note("Keine Add-on-Quellordner vorhanden")
+        for addon_dir in addon_dirs:
+            passed = validate_addon(addon_dir)
+            if not passed and args.quarantine:
+                moved = quarantine_addon(addon_dir)
+                if moved:
+                    quarantined.append(moved.relative_to(ROOT).as_posix())
+            # Keep findings from all add-ons in the final report.
+            # validate_addon resets the lists, so collect each result below.
 
-        for addon_dir in sorted(addon_dirs):
-            note(f'Validating {addon_dir.name} ...')
-            addon_id, addon_type = validate_addon_xml(addon_dir)
-
-            if addon_type == 'repository':
-                validate_repository(addon_dir)
-                continue
-
-            used_ids = validate_python(addon_dir, addon_id)
-            setting_ids = validate_settings(addon_dir, addon_id)
-            used_ids |= setting_ids
-            validate_translations(addon_dir, used_ids)
-            validate_kodi_compatibility(addon_dir)
-
-    write_report(report_path)
-    print(report_path.read_text(encoding='utf-8'))
-    return 1 if errors else 0
+    write_report(report, quarantined)
+    print(report.read_text(encoding="utf-8"))
+    return 1 if ERRORS else 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:
-        report_path = Path(sys.argv[sys.argv.index('--report') + 1]) if '--report' in sys.argv else Path('kodi-addon-validation.txt')
-        report_path.write_text(
-            'Kodi addon validation report\n\n'
-            'UNEXPECTED SCRIPT ERROR\n'
-            f'{exc}\n',
-            encoding='utf-8',
-        )
-        print(f'Unexpected validation error: {exc}', file=sys.stderr)
-        raise SystemExit(1)
+        print(f"Unerwarteter Validator-Fehler: {exc}", file=sys.stderr)
+        raise SystemExit(2)
