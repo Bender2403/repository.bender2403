@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import stat
 import tempfile
@@ -115,6 +116,10 @@ def inspect_addon_zip(archive: zipfile.ZipFile, expected_id: str, expected_versi
 def extract_addon_zip(archive_bytes: bytes, destination_root: Path,
                       expected_id: str, expected_version: str) -> str:
     """Validate and atomically replace destination_root/expected_id."""
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", expected_id):
+        raise UnsafeAddonZip(f"Ungültige Add-on-ID: {expected_id!r}")
+    if not re.fullmatch(r"[0-9A-Za-z.+_-]+", expected_version):
+        raise UnsafeAddonZip(f"Ungültige Add-on-Version: {expected_version!r}")
     destination_root = Path(destination_root)
     destination_root.mkdir(parents=True, exist_ok=True)
     target = destination_root / expected_id
