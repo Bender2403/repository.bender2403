@@ -15,7 +15,7 @@
     <description lang="de_DE">Stellt geprüfte Kodi-Add-ons und deren Aktualisierungen bereit.</description>
     <platform>all</platform>
     <assets>
-      <icon>icon.jpg</icon>
+      <icon>icon.png</icon>
     </assets>
   </extension>
 </addon>
