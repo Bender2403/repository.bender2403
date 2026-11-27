@@ -8,7 +8,14 @@ Versionsnummern des Repository-Add-ons entsprechen den Versionen in
 
 ## [Unreleased]
 
-- Noch keine Änderungen.
+### Geändert
+
+- Kodi-Add-on-Validator prüft generische Extension Points und behandelt optionale Einstellungs- und Sprachdateien nicht mehr als zwingende Voraussetzungen.
+- Python-Dateien werden ohne Erzeugung von __pycache__- oder .pyc-Dateien syntaktisch geprüft.
+- Fehlerhafte Add-on-Quellordner können beim Push sicher in Quarantäne verschoben werden.
+- Wiederherstellung validiert Add-ons erneut und überschreibt keine vorhandenen Quellordner.
+- Validierungs- und Wiederherstellungsworkflows sichern erfolgreiche Dateioperationen auch dann, wenn andere Add-ons fehlerhaft bleiben.
+- Regressionstests für optionale Dateien, Python-Syntax, unsichere Library-Pfade, Quarantäne und sichere Wiederherstellung ergänzt.
 
 ## [1.0.1] - 2026-11-06
 
