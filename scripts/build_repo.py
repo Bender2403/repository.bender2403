@@ -131,7 +131,7 @@ for zip_path in sorted(INBOX.glob("*.zip")):
             from zip_safety import inspect_addon_zip
             inspect_addon_zip(archive, addon_id, version)
         incoming.append((zip_path, archive_bytes, addon_id, version))
-    except (OSError, ValueError, zipfile.BadZipFile, RuntimeError) as exc:
+    except (OSError, ValueError, ET.ParseError, UnicodeError, zipfile.BadZipFile, RuntimeError) as exc:
         destination = QUARANTINE / zip_path.name
         counter = 1
         while destination.exists():
