@@ -6,13 +6,17 @@ on:
       - main
     paths:
       - 'addons/**'
-      - '.github/scripts/validate_kodi_addon.py'\n      - '.github/scripts/restore_kodi_addon.py'\n      - '.github/scripts/test_kodi_addon_validation.py'
+      - '.github/scripts/validate_kodi_addon.py'
+      - '.github/scripts/restore_kodi_addon.py'
+      - '.github/scripts/test_kodi_addon_validation.py'
       - '.github/workflows/validate-kodi-addon.yml'
       - '.github/trigger/validate-kodi-addons.txt'
   pull_request:
     paths:
       - 'addons/**'
       - '.github/scripts/validate_kodi_addon.py'
+      - '.github/scripts/restore_kodi_addon.py'
+      - '.github/scripts/test_kodi_addon_validation.py'
       - '.github/workflows/validate-kodi-addon.yml'
   workflow_dispatch:
 
@@ -38,6 +42,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Run validator and restore unit tests
+        run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
 
       - name: Validate addon sources
         id: validation
