@@ -16,6 +16,10 @@ Versionsnummern des Repository-Add-ons entsprechen den Versionen in
 - Wiederherstellung validiert Add-ons erneut und überschreibt keine vorhandenen Quellordner.
 - Validierungs- und Wiederherstellungsworkflows sichern erfolgreiche Dateioperationen auch dann, wenn andere Add-ons fehlerhaft bleiben.
 - Regressionstests für optionale Dateien, Python-Syntax, unsichere Library-Pfade, Quarantäne und sichere Wiederherstellung ergänzt.
+- Quarantäneordner `_quarantine/` mit README und dokumentiertem Restore-Ablauf fest verankert.
+- Externe Add-on-ZIPs werden vor dem Entpacken auf Pfadmanipulation, Symlinks, doppelte Einträge, Dateianzahl, Einzel-/Gesamtgröße, Kompressionsverhältnis und Add-on-Metadaten geprüft.
+- ZIP-Inhalte werden zunächst in einem Staging-Ordner entpackt und das Veröffentlichungsverzeichnis erst nach erfolgreicher Prüfung atomar ersetzt.
+- Kollisionen zwischen Add-on-Quellordnern und `EXTERNAL_ZIPS` werden erkannt; ZIP-Sicherheits-Regressionstests laufen vor Veröffentlichung.
 
 ## [1.0.1] - 2026-11-06
 
