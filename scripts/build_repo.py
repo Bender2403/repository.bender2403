@@ -87,6 +87,8 @@ for source in sorted(p for p in SOURCES.iterdir() if p.is_dir()):
         if moved_old:
             shutil.rmtree(backup)
             moved_old = False
+        # The staging directory has been renamed to the final target.
+        archive = target / archive.name
     finally:
         if stage.exists():
             shutil.rmtree(stage, ignore_errors=True)
