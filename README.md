@@ -3,9 +3,8 @@
 Dieses öffentliche Repository stellt geprüfte Add-ons für Kodi bereit.
 
 ## Repository in Kodi installieren
-
 Repository-ZIP:
-`https://raw.githubusercontent.com/Bender2403/repository.bender2403/main/repository.bender2403/repository.bender2403-1.0.1.zip`
+`https://raw.githubusercontent.com/Bender2403/repository.bender2403/main/repository.bender2403/repository.bender2403-1.0.3.zip`
 
 Repository-Metadaten:
 - `https://raw.githubusercontent.com/Bender2403/repository.bender2403/main/addons.xml`
