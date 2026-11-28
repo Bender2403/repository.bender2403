@@ -21,9 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Repository auschecken
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Python einrichten
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: ZIP-Sicherheits- und Validator-Regressionstests
@@ -37,7 +37,7 @@ jobs:
             --report-dir "${{ runner.temp }}/kodi-compatibility-reports"
       - name: Kodi-Kompatibilitätsberichte hochladen
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: kodi-version-compatibility-reports
           path: ${{ runner.temp }}/kodi-compatibility-reports/*.txt
