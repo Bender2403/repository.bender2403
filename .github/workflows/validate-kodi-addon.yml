@@ -44,7 +44,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate addon sources and Kodi compatibility
+    name: Validate addon sources
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -108,16 +108,6 @@ jobs:
             echo 'Validation trigger is not present.'
           fi
 
-      - name: Install official Kodi add-on checker
-        run: python3 -m pip install 'kodi-addon-checker==0.0.36'
-
-      - name: Check Kodi 20 Nexus, Kodi 21 Omega and Kodi 22 Piers
-        id: kodi_compatibility
-        run: |
-          python3 .github/scripts/check_kodi_versions.py \
-            --addons-dir addons \
-            --report-dir "${{ runner.temp }}/kodi-compatibility-reports"
-
       - name: Upload validation report
         if: always()
         uses: actions/upload-artifact@v4
@@ -127,15 +117,49 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Upload Kodi version compatibility reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: kodi-version-compatibility-reports
-          path: ${{ runner.temp }}/kodi-compatibility-reports/*.txt
-          if-no-files-found: warn
-          retention-days: 14
-
       - name: Fail pull request when validation finds errors
         if: github.event_name == 'pull_request' && steps.validation.outcome == 'failure'
         run: exit 1
+
+  kodi-compatibility:
+    name: Kodi ${{ matrix.kodi_label }}
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - kodi_branch: nexus
+            kodi_label: 20 Nexus
+          - kodi_branch: omega
+            kodi_label: 21 Omega
+          - kodi_branch: piers
+            kodi_label: 22 Piers
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install official Kodi add-on checker
+        run: python3 -m pip install 'kodi-addon-checker==0.0.36'
+
+      - name: Check Kodi ${{ matrix.kodi_label }}
+        run: |
+          python3 .github/scripts/check_kodi_versions.py \
+            --addons-dir addons \
+            --report-dir "${{ runner.temp }}/kodi-compatibility-reports" \
+            --branch "${{ matrix.kodi_branch }}"
+
+      - name: Upload Kodi compatibility report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kodi-compatibility-${{ matrix.kodi_branch }}
+          path: ${{ runner.temp }}/kodi-compatibility-reports/kodi-compatibility-${{ matrix.kodi_branch }}.txt
+          if-no-files-found: warn
+          retention-days: 14
