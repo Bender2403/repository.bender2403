@@ -42,6 +42,21 @@ class KodiVersionCompatibilityTests(unittest.TestCase):
             self.assertIn("RESULT: PASSED", report.read_text(encoding="utf-8"))
 
     @patch.object(compatibility.subprocess, "run")
+    def test_single_branch_run_checks_only_requested_version(self, run) -> None:
+        run.return_value = SimpleNamespace(returncode=0, stdout="INFO: clean")
+        result = compatibility.run_checks(
+            self.addons, self.reports, "kodi-addon-checker", "omega"
+        )
+
+        self.assertEqual(result, 0)
+        self.assertEqual(run.call_count, 1)
+        command = run.call_args.args[0]
+        self.assertEqual(command[command.index("--branch") + 1], "omega")
+        self.assertTrue((self.reports / "kodi-compatibility-omega.txt").is_file())
+        self.assertFalse((self.reports / "kodi-compatibility-nexus.txt").exists())
+        self.assertFalse((self.reports / "kodi-compatibility-piers.txt").exists())
+
+    @patch.object(compatibility.subprocess, "run")
     def test_checker_error_fails_only_the_affected_version_report(self, run) -> None:
         run.side_effect = [
             SimpleNamespace(returncode=0, stdout="Nexus clean"),
