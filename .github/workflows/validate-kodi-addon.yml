@@ -59,6 +59,7 @@ jobs:
           python-version: '3.12'
 
       - name: Run validator and restore unit tests
+        # Includes ZIP intake and full repository-build integration tests.
         run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
 
       - name: Validate addon sources
