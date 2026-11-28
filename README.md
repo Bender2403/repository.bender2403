@@ -18,7 +18,7 @@ Die Quellordner liegen unter `addons/<addon-id>/`. Bei jedem Push nach `main` ba
 Neue Add-ons können alternativ als ZIP-Datei über den Eingangsordner bereitgestellt werden:
 
 - `arbeitsordner/eingang/`: Hier neue Add-on-ZIPs ablegen.
-- `arbeitsordner/quarantaene/`: Fehlerhafte, unsichere oder kollidierende ZIPs werden hierhin verschoben. Zu jeder Datei wird eine `.reason.txt` mit dem Fehlergrund abgelegt.
+- `arbeitsordner/quarantaene/`: Fehlerhafte, unsichere oder kollidierende ZIPs werden hierhin verschoben. Für jeden Fehler wird ein Textbericht `<addon-id>.txt` erstellt. Ist keine Add-on-ID lesbar, dient der ZIP-Dateiname ohne Endung als Berichtsname. Mehrere Fehler derselben Add-on-ID werden im selben Bericht gesammelt.
 
 Jede ZIP wird einzeln geprüft. Fehlerhafte Dateien stoppen die Verarbeitung der übrigen ZIPs nicht. Gültige ZIPs werden übernommen und nach erfolgreicher Veröffentlichung aus dem Eingangsordner entfernt. ZIPs mit doppelter Add-on-ID oder einer ID, die bereits unter `addons/` existiert, werden in Quarantäne verschoben.
 
