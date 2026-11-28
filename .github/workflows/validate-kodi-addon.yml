@@ -8,9 +8,12 @@ on:
       - 'addons/**'
       - 'scripts/build_repo.py'
       - 'scripts/zip_safety.py'
+      - 'scripts/zip_intake.py'
       - '.github/scripts/check_kodi_versions.py'
       - '.github/scripts/test_kodi_version_compatibility.py'
       - '.github/scripts/test_zip_safety.py'
+      - '.github/scripts/test_zip_intake.py'
+      - '.github/scripts/test_build_repo_integration.py'
       - '.github/scripts/validate_kodi_addon.py'
       - '.github/scripts/restore_kodi_addon.py'
       - '.github/scripts/test_kodi_addon_validation.py'
@@ -56,6 +59,7 @@ jobs:
           python-version: '3.12'
 
       - name: Run validator and restore unit tests
+        # Includes ZIP intake and full repository-build integration tests.
         run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
 
       - name: Validate addon sources

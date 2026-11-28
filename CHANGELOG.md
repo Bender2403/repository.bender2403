@@ -8,6 +8,16 @@ Versionsnummern des Repository-Add-ons entsprechen den Versionen in
 
 ## [Unreleased]
 
+### Hinzugefügt
+
+- ZIP-Eingangsordner unter `arbeitsordner/eingang/`; ungültige oder kollidierende ZIPs werden einzeln nach `arbeitsordner/quarantaene/` verschoben. Der Fehlerbericht wird unter der Add-on-ID als `.txt` gespeichert; danach wird die ZIP gelöscht. Ist keine ID lesbar, wird der ZIP-Dateiname als Fallback verwendet. Kann der Bericht nicht geschrieben werden, bleibt die ZIP zur Fehlerbehebung erhalten.
+- Gültige Eingangs-ZIPs werden nach Sicherheitsprüfung übernommen; erfolgreich veröffentlichte Eingangsdateien werden entfernt.
+
+### Entfernt
+
+- Automatischer Bezug externer ZIPs und die dafür benötigte `SOURCE_REPO_TOKEN`-Abhängigkeit.
+- Bisherige generierte externe Add-on-Verzeichnisse und ZIP-Pakete.
+
 ### Geändert
 
 - Repository-Icon auf PNG mit 256 × 256 Pixeln umgestellt; das vorhandene Motiv wurde quadratisch zugeschnitten und für den Kodi-Checker optimiert.
@@ -22,7 +32,7 @@ Versionsnummern des Repository-Add-ons entsprechen den Versionen in
 - Externe Add-on-ZIPs werden vor dem Entpacken auf Pfadmanipulation, Symlinks, doppelte Einträge, Dateianzahl, Einzel-/Gesamtgröße, Kompressionsverhältnis und Add-on-Metadaten geprüft.
 - ZIP-Inhalte werden zunächst in einem Staging-Ordner entpackt und das Veröffentlichungsverzeichnis erst nach erfolgreicher Prüfung atomar ersetzt.
 - Komprimierte ZIP-Dateien sind zusätzlich auf 50 MiB begrenzt; lokale Add-on-Ausgaben werden ebenfalls staged und atomar ersetzt, Symlinks im Quellordner abgelehnt.
-- Kollisionen zwischen Add-on-Quellordnern und `EXTERNAL_ZIPS` werden erkannt; ZIP-Sicherheits-Regressionstests laufen vor Veröffentlichung.
+- Kollisionen zwischen eingehenden ZIPs und bereits vorhandenen Add-on-Quellordnern werden erkannt; ZIP-Sicherheits- und Eingangs-Regressionstests laufen vor Veröffentlichung.
 - Offiziellen Kodi-Addon-Checker für Nexus, Omega und Piers ergänzt; jede Zielversion erhält einen eigenen Bericht.
 - Kodi-Kompatibilitätsprüfung läuft sowohl bei Add-on-Validierungen als auch als Pflichtprüfung vor dem Repository-Build und der Veröffentlichung.
 
