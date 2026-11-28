@@ -71,7 +71,7 @@ class BuildRepoZipIntakeIntegrationTests(unittest.TestCase):
             broken_report = quarantine / "broken-archive.txt"
             duplicate_report = quarantine / "plugin.video.duplicate.txt"
             self.assertTrue(broken_report.is_file())
-            self.assertIn("ZIP-Archiv", broken_report.read_text(encoding="utf-8"))
+            self.assertIn("File is not a zip file", broken_report.read_text(encoding="utf-8"))
             self.assertTrue(duplicate_report.is_file())
             duplicate_content = duplicate_report.read_text(encoding="utf-8")
             self.assertIn("duplicate-one.zip", duplicate_content)
