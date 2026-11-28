@@ -36,7 +36,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: kodi-repository-main
@@ -47,14 +47,16 @@ jobs:
     name: Validate addon sources
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -110,7 +112,7 @@ jobs:
 
       - name: Upload validation report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: kodi-addon-validation-report
           path: ${{ runner.temp }}/kodi-addon-validation.txt
@@ -138,10 +140,10 @@ jobs:
             kodi_label: 22 Piers
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -157,7 +159,7 @@ jobs:
 
       - name: Upload Kodi compatibility report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: kodi-compatibility-${{ matrix.kodi_branch }}
           path: ${{ runner.temp }}/kodi-compatibility-reports/kodi-compatibility-${{ matrix.kodi_branch }}.txt
